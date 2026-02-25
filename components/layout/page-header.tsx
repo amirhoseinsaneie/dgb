@@ -1,6 +1,5 @@
-"use client";
-
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,15 +10,13 @@ import {
 } from "@/components/ui/breadcrumb";
 import { cn } from "@/lib/utils";
 
-interface BreadcrumbItem {
-  label: string;
-  href?: string;
-}
-
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
-  breadcrumbs?: BreadcrumbItem[];
+  breadcrumbs?: {
+    label: string;
+    href?: string;
+  }[];
   actions?: React.ReactNode;
   className?: string;
 }
@@ -32,48 +29,48 @@ export function PageHeader({
   className,
 }: PageHeaderProps) {
   return (
-    <div className={cn("space-y-2", className)}>
-      {breadcrumbs && breadcrumbs.length > 0 && (
-        <Breadcrumb>
-          <BreadcrumbList>
-            {breadcrumbs.flatMap((item, i) =>
-              i === 0
-                ? [
-                    <BreadcrumbItem key={i}>
-                      {item.href ? (
-                        <BreadcrumbLink asChild>
-                          <Link href={item.href}>{item.label}</Link>
-                        </BreadcrumbLink>
-                      ) : (
-                        <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                      )}
-                    </BreadcrumbItem>,
-                  ]
-                : [
-                    <BreadcrumbSeparator key={`sep-${i}`} />,
-                    <BreadcrumbItem key={i}>
-                      {item.href ? (
-                        <BreadcrumbLink asChild>
-                          <Link href={item.href}>{item.label}</Link>
-                        </BreadcrumbLink>
-                      ) : (
-                        <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                      )}
-                    </BreadcrumbItem>,
-                  ]
-            )}
-          </BreadcrumbList>
-        </Breadcrumb>
+    <div
+      className={cn(
+        "flex flex-col gap-4 md:flex-row md:items-center md:justify-between",
+        className
       )}
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-          {subtitle && (
-            <p className="text-muted-foreground text-sm mt-1">{subtitle}</p>
-          )}
-        </div>
-        {actions && <div className="flex items-center gap-2">{actions}</div>}
+    >
+      <div className="space-y-1.5">
+        {breadcrumbs && (
+          <Breadcrumb>
+            <BreadcrumbList>
+              {breadcrumbs.map((crumb, index) => {
+                const isLast = index === breadcrumbs.length - 1;
+                return (
+                  <div key={crumb.label} className="flex items-center">
+                    <BreadcrumbItem>
+                      {isLast || !crumb.href ? (
+                        <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                      ) : (
+                        <BreadcrumbLink asChild>
+                          <Link href={crumb.href}>{crumb.label}</Link>
+                        </BreadcrumbLink>
+                      )}
+                    </BreadcrumbItem>
+                    {!isLast && (
+                      <BreadcrumbSeparator>
+                        <ChevronLeft className="size-4" />
+                      </BreadcrumbSeparator>
+                    )}
+                  </div>
+                );
+              })}
+            </BreadcrumbList>
+          </Breadcrumb>
+        )}
+        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+        {subtitle && (
+          <p className="text-muted-foreground text-lg">{subtitle}</p>
+        )}
       </div>
+      {actions && (
+        <div className="flex flex-wrap items-center gap-2">{actions}</div>
+      )}
     </div>
   );
 }

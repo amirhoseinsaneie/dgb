@@ -42,7 +42,7 @@ export default function ApprovalPage() {
   if (!board || !decision) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
-        <p className="text-muted-foreground">Decision not found</p>
+        <p className="text-muted-foreground">تصمیم یافت نشد</p>
       </div>
     );
   }
@@ -67,7 +67,7 @@ export default function ApprovalPage() {
     setRows((current) =>
       current.map((row) =>
         row.approverId === approverId
-          ? { ...row, comment: "Reminder sent internally" }
+          ? { ...row, comment: "یادآور داخلی ارسال شد" }
           : row
       )
     );
@@ -76,66 +76,66 @@ export default function ApprovalPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Approvals for ${decision.title}`}
+        title={`تاییدهای تصمیم: ${decision.title}`}
         breadcrumbs={[
-          { label: "Boards", href: "/boards" },
+          { label: "بوردها", href: "/boards" },
           { label: board.name, href: `/boards/${boardId}` },
-          { label: "Decisions", href: `/boards/${boardId}/decisions` },
+          { label: "تصمیمات", href: `/boards/${boardId}/decisions` },
           { label: decision.title, href: `/boards/${boardId}/decisions/${decisionId}` },
-          { label: "Approvals", href: `/boards/${boardId}/decisions/${decisionId}/approvals` },
+          { label: "تاییدها", href: `/boards/${boardId}/decisions/${decisionId}/approvals` },
         ]}
         actions={
           <Button asChild variant="outline">
-            <Link href={`/boards/${boardId}/decisions/${decisionId}`}>Back to decision</Link>
+            <Link href={`/boards/${boardId}/decisions/${decisionId}`}>بازگشت به تصمیم</Link>
           </Button>
         }
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>Approval Summary</CardTitle>
+          <CardTitle>خلاصه تاییدها</CardTitle>
           <CardDescription>
-            Required approvers: {summary.required} | Approved: {summary.approved} | Pending: {summary.pending}
+            تعداد تایید‌کنندگان: {summary.required} | تایید شده: {summary.approved} | در انتظار: {summary.pending}
           </CardDescription>
         </CardHeader>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Approver List</CardTitle>
-          <CardDescription>Manage reminders and demo approvals</CardDescription>
+          <CardTitle>لیست تایید‌کنندگان</CardTitle>
+          <CardDescription>مدیریت یادآورها و ثبت تاییدها</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Comment</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>نام</TableHead>
+                <TableHead>وضعیت</TableHead>
+                <TableHead>یادداشت</TableHead>
+                <TableHead>تاریخ</TableHead>
+                <TableHead>عملیات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-muted-foreground">
-                    No approvers assigned.
+                    تایید‌کننده‌ای تعیین نشده است.
                   </TableCell>
                 </TableRow>
               )}
               {rows.map((row) => (
                 <TableRow key={row.approverId}>
                   <TableCell>{row.approverName}</TableCell>
-                  <TableCell>{row.status}</TableCell>
+                  <TableCell>{row.status === "Approved" ? "تایید شده" : row.status === "Rejected" ? "رد شده" : "در انتظار"}</TableCell>
                   <TableCell>{row.comment || "-"}</TableCell>
-                  <TableCell>{row.date ? new Date(row.date).toLocaleDateString() : "-"}</TableCell>
-                  <TableCell className="space-x-2">
+                  <TableCell>{row.date ? new Date(row.date).toLocaleDateString("fa-IR") : "-"}</TableCell>
+                  <TableCell className="space-x-2 rtl:space-x-reverse">
                     <Button size="sm" variant="outline" onClick={() => sendReminder(row.approverId)}>
-                      Request Reminder
+                      ارسال یادآور
                     </Button>
                     <Button size="sm" onClick={() => markApproved(row.approverId)}>
-                      Mark approved
+                      ثبت تایید
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -147,11 +147,11 @@ export default function ApprovalPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Actions</CardTitle>
+          <CardTitle>عملیات</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          <Button variant="outline">Send approval request</Button>
-          <Input placeholder="Internal note (MVP)" />
+          <Button variant="outline">ارسال درخواست تایید همگانی</Button>
+          <Input placeholder="یادداشت داخلی..." className="w-64" />
         </CardContent>
       </Card>
     </div>

@@ -16,11 +16,11 @@ import { useApp } from "@/lib/store";
 
 const chartConfig = {
   value: {
-    label: "Value",
+    label: "مقدار",
     color: "hsl(var(--chart-1))",
   },
   count: {
-    label: "Count",
+    label: "تعداد",
     color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig;
@@ -54,7 +54,7 @@ export default function ReportsPage() {
 
   const categoryData = decisions.reduce(
     (acc, d) => {
-      const cat = d.category || "Other";
+      const cat = d.category || "سایر";
       acc[cat] = (acc[cat] || 0) + 1;
       return acc;
     },
@@ -83,17 +83,17 @@ export default function ReportsPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Reports"
-        subtitle="Decision health and trends"
-        breadcrumbs={[{ label: "Reports", href: "/reports" }]}
+        title="گزارش‌ها"
+        subtitle="سلامت تصمیمات و روندها"
+        breadcrumbs={[{ label: "گزارش‌ها", href: "/reports" }]}
         actions={
           <div className="flex gap-2">
             <Button variant="outline" size="sm">
-              <FileDown className="size-4 mr-2" />
-              Export PDF
+              <FileDown className="size-4 me-2" />
+              خروجی PDF
             </Button>
             <Button variant="outline" size="sm">
-              Export CSV
+              خروجی CSV
             </Button>
           </div>
         }
@@ -105,28 +105,28 @@ export default function ReportsPage() {
           size="sm"
           onClick={() => setReportType("health")}
         >
-          Decision Health Report
+          گزارش سلامت تصمیمات
         </Button>
         <Button
           variant={reportType === "overdue" ? "default" : "outline"}
           size="sm"
           onClick={() => setReportType("overdue")}
         >
-          Overdue & Risks
+          عقب‌افتاده و ریسک‌ها
         </Button>
         <Button
           variant={reportType === "cycle" ? "default" : "outline"}
           size="sm"
           onClick={() => setReportType("cycle")}
         >
-          Cycle Time
+          زمان چرخه
         </Button>
         <Button
           variant={reportType === "quality" ? "default" : "outline"}
           size="sm"
           onClick={() => setReportType("quality")}
         >
-          Quality Coverage
+          پوشش کیفیت
         </Button>
       </div>
 
@@ -134,54 +134,54 @@ export default function ReportsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
-              % with owner
+              % دارای مالک
             </CardTitle>
             <BarChart3 className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{pctOwner}%</div>
             <p className="text-muted-foreground text-xs">
-              {withOwner} of {total} decisions
+              {withOwner} از {total} تصمیم
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
-              % with criteria
+              % دارای معیار
             </CardTitle>
             <TrendingUp className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{pctCriteria}%</div>
             <p className="text-muted-foreground text-xs">
-              {withCriteria} of {total} decisions
+              {withCriteria} از {total} تصمیم
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
-              % irreversible with evidence
+              % غیرقابل بازگشت با شواهد
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{pctEvidence}%</div>
             <p className="text-muted-foreground text-xs">
-              Irreversible decisions
+              تصمیمات غیرقابل بازگشت
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
-              Avg approval time
+              میانگین زمان تایید
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4.2 days</div>
+            <div className="text-2xl font-bold">۴.۲ روز</div>
             <p className="text-muted-foreground text-xs">
-              Average
+              میانگین
             </p>
           </CardContent>
         </Card>
@@ -190,8 +190,8 @@ export default function ReportsPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Decisions by Category</CardTitle>
-            <CardDescription>Distribution by category</CardDescription>
+            <CardTitle>تصمیمات بر اساس دسته‌بندی</CardTitle>
+            <CardDescription>توزیع بر اساس دسته‌بندی</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px]">
@@ -207,8 +207,8 @@ export default function ReportsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Top 10 at Risk</CardTitle>
-            <CardDescription>Decisions at risk</CardDescription>
+            <CardTitle>۱۰ مورد در معرض خطر</CardTitle>
+            <CardDescription>تصمیمات در معرض خطر</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -236,7 +236,7 @@ export default function ReportsPage() {
                   (!d.ownerId || !d.criteria?.length || !d.dueDate)
               ).length === 0 && (
                 <p className="text-muted-foreground text-sm">
-                  No decisions at risk
+                  تصمیمی در معرض خطر نیست
                 </p>
               )}
             </div>
@@ -247,25 +247,25 @@ export default function ReportsPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Most Common Missing Fields</CardTitle>
-            <CardDescription>Quality coverage hotspots</CardDescription>
+            <CardTitle>رایج‌ترین فیلدهای ناقص</CardTitle>
+            <CardDescription>نقاط داغ پوشش کیفیت</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <p>Owner: {missingFieldCounts.owner}</p>
-            <p>Criteria: {missingFieldCounts.criteria}</p>
-            <p>Due date: {missingFieldCounts.dueDate}</p>
-            <p>Evidence (irreversible): {missingFieldCounts.evidence}</p>
+            <p>مالک: {missingFieldCounts.owner}</p>
+            <p>معیار: {missingFieldCounts.criteria}</p>
+            <p>تاریخ سررسید: {missingFieldCounts.dueDate}</p>
+            <p>شواهد (غیرقابل بازگشت): {missingFieldCounts.evidence}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Decisions by Impact</CardTitle>
-            <CardDescription>Low / Medium / High</CardDescription>
+            <CardTitle>تصمیمات بر اساس تاثیر</CardTitle>
+            <CardDescription>کم / متوسط / زیاد</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <p>Low: {impactData.Low || 0}</p>
-            <p>Medium: {impactData.Medium || 0}</p>
-            <p>High: {impactData.High || 0}</p>
+            <p>کم: {impactData.Low || 0}</p>
+            <p>متوسط: {impactData.Medium || 0}</p>
+            <p>زیاد: {impactData.High || 0}</p>
           </CardContent>
         </Card>
       </div>

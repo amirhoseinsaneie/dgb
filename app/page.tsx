@@ -17,26 +17,26 @@ export default function LandingPage() {
     <AppLayout>
       <div className="max-w-4xl mx-auto space-y-8">
         <PageHeader
-          title="Decision Governance Board"
-          subtitle="Register, standardize, and track key decisions in agile teams"
+          title="هیئت حاکمیت تصمیم"
+          subtitle="ثبت، استانداردسازی و پیگیری تصمیمات کلیدی در تیم‌های چابک"
         />
 
         <Card>
           <CardHeader>
-            <CardTitle>Quick Start</CardTitle>
-            <CardDescription>Quick start by creating or opening a board</CardDescription>
+            <CardTitle>شروع سریع</CardTitle>
+            <CardDescription>با ایجاد یا باز کردن یک بورد شروع کنید</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-4">
             <Button asChild size="lg">
               <Link href="/boards/create" className="gap-2">
                 <Plus className="size-4" />
-                Create New Board
+                ایجاد بورد جدید
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg">
               <Link href="/boards" className="gap-2">
                 <FolderOpen className="size-4" />
-                Open Existing Board
+                باز کردن بورد موجود
               </Link>
             </Button>
           </CardContent>
@@ -44,8 +44,8 @@ export default function LandingPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Why this tool?</CardTitle>
-            <CardDescription>Why this tool?</CardDescription>
+            <CardTitle>چرا این ابزار؟</CardTitle>
+            <CardDescription>چرا این ابزار؟</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-3">
             <div className="flex gap-3 rounded-lg border p-4">
@@ -53,9 +53,9 @@ export default function LandingPage() {
                 <AlertTriangle className="size-5 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="font-medium">Decisions without owner/criteria</h3>
+                <h3 className="font-medium">تصمیمات بدون مالک/معیار</h3>
                 <p className="text-muted-foreground text-sm">
-                  Delays and high risk
+                  تاخیر و ریسک بالا
                 </p>
               </div>
             </div>
@@ -64,9 +64,9 @@ export default function LandingPage() {
                 <RotateCcw className="size-5 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="font-medium">Irreversible decisions</h3>
+                <h3 className="font-medium">تصمیمات غیرقابل بازگشت</h3>
                 <p className="text-muted-foreground text-sm">
-                  Require evidence and options
+                  نیاز به شواهد و گزینه‌ها
                 </p>
               </div>
             </div>
@@ -75,9 +75,9 @@ export default function LandingPage() {
                 <Target className="size-5 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="font-medium">Decision alignment</h3>
+                <h3 className="font-medium">هم‌راستایی تصمیمات</h3>
                 <p className="text-muted-foreground text-sm">
-                  Reduce conflict and rework
+                  کاهش تعارض و دوباره‌کاری
                 </p>
               </div>
             </div>
@@ -86,15 +86,15 @@ export default function LandingPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Recent Boards</CardTitle>
-            <CardDescription>5 most recent boards</CardDescription>
+            <CardTitle>بوردهای اخیر</CardTitle>
+            <CardDescription>۵ بورد اخیر</CardDescription>
           </CardHeader>
           <CardContent>
             {recentBoards.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
-                <p className="text-muted-foreground">No boards created yet</p>
+                <p className="text-muted-foreground">هنوز بوردی ایجاد نشده است</p>
                 <Button asChild>
-                  <Link href="/boards/create">Create Board</Link>
+                  <Link href="/boards/create">ایجاد بورد</Link>
                 </Button>
               </div>
             ) : (
@@ -115,7 +115,7 @@ export default function LandingPage() {
                       )}
                     </div>
                     <Button asChild variant="outline" size="sm">
-                      <Link href={`/boards/${board.id}`}>Open</Link>
+                      <Link href={`/boards/${board.id}`}>باز کردن</Link>
                     </Button>
                   </div>
                 ))}

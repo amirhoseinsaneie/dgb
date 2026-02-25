@@ -19,7 +19,7 @@ export default function BoardDashboardPage() {
   if (!board) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
-        <p className="text-muted-foreground">Board not found</p>
+        <p className="text-muted-foreground">بورد یافت نشد</p>
       </div>
     );
   }
@@ -50,63 +50,63 @@ export default function BoardDashboardPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Board: ${board.name}`}
-        subtitle="Decision health, open decisions, and upcoming deadlines"
+        title={`بورد: ${board.name}`}
+        subtitle="سلامت تصمیمات، تصمیمات باز و سررسیدهای آینده"
         breadcrumbs={[
-          { label: "Boards", href: "/boards" },
+          { label: "بوردها", href: "/boards" },
           { label: board.name, href: `/boards/${boardId}` },
         ]}
       />
 
       <div className="flex flex-wrap gap-4 rounded-lg bg-muted/50 p-4">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Open:</span>
+          <span className="text-sm text-muted-foreground">باز:</span>
           <Badge variant="secondary">{openCount}</Badge>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Overdue:</span>
+          <span className="text-sm text-muted-foreground">عقب‌افتاده:</span>
           <Badge variant={overdueCount > 0 ? "destructive" : "secondary"}>{overdueCount}</Badge>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Missing Owner:</span>
+          <span className="text-sm text-muted-foreground">بدون مالک:</span>
           <Badge variant="secondary">{missingOwnerCount}</Badge>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Missing Criteria:</span>
+          <span className="text-sm text-muted-foreground">بدون معیار:</span>
           <Badge variant="secondary">{missingCriteriaCount}</Badge>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Irreversible pending:</span>
+          <span className="text-sm text-muted-foreground">غیرقابل بازگشت معلق:</span>
           <Badge variant="secondary">{irreversiblePending}</Badge>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Avg time to approve:</span>
-          <span className="font-medium">4.2 days</span>
+          <span className="text-sm text-muted-foreground">میانگین زمان تایید:</span>
+          <span className="font-medium">۴.۲ روز</span>
         </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Priority Alerts</CardTitle>
-            <CardDescription>Items requiring action</CardDescription>
+            <CardTitle>هشدارهای اولویت‌دار</CardTitle>
+            <CardDescription>موارد نیازمند اقدام</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {priorityAlerts.length === 0 && (
-              <p className="text-sm text-muted-foreground">No alerts</p>
+              <p className="text-sm text-muted-foreground">بدون هشدار</p>
             )}
             {priorityAlerts.map((decision) => (
               <div key={decision.id} className="flex items-center justify-between rounded-lg border p-3">
                 <div>
                   <p className="text-sm font-medium">{decision.title}</p>
                   <p className="text-xs text-muted-foreground">
-                    {!decision.ownerId && "Missing owner "}
-                    {decision.criteria.length === 0 && "Missing criteria "}
-                    {decision.dueDate && new Date(decision.dueDate) < new Date() && "Overdue"}
+                    {!decision.ownerId && "بدون مالک "}
+                    {decision.criteria.length === 0 && "بدون معیار "}
+                    {decision.dueDate && new Date(decision.dueDate) < new Date() && "عقب‌افتاده"}
                   </p>
                 </div>
                 <Button asChild size="sm" variant="outline">
-                  <Link href={`/boards/${boardId}/decisions/${decision.id}`}>Go to Decision</Link>
+                  <Link href={`/boards/${boardId}/decisions/${decision.id}`}>رفتن به تصمیم</Link>
                 </Button>
               </div>
             ))}
@@ -115,21 +115,21 @@ export default function BoardDashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Upcoming Deadlines</CardTitle>
-            <CardDescription>Near due date decisions</CardDescription>
+            <CardTitle>سررسیدهای آینده</CardTitle>
+            <CardDescription>تصمیمات نزدیک به سررسید</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {upcomingDeadlines.length === 0 && (
-              <p className="text-sm text-muted-foreground">No upcoming deadlines</p>
+              <p className="text-sm text-muted-foreground">سررسید آینده‌ای وجود ندارد</p>
             )}
             {upcomingDeadlines.map((decision) => (
               <div key={decision.id} className="flex items-center justify-between rounded-lg border p-3">
                 <div>
                   <p className="text-sm font-medium">{decision.title}</p>
-                  <p className="text-xs text-muted-foreground">Due: {decision.dueDate}</p>
+                  <p className="text-xs text-muted-foreground">سررسید: {decision.dueDate}</p>
                 </div>
                 <Button asChild size="sm" variant="outline">
-                  <Link href={`/boards/${boardId}/kanban`}>Go to Board</Link>
+                  <Link href={`/boards/${boardId}/kanban`}>رفتن به بورد</Link>
                 </Button>
               </div>
             ))}
@@ -139,37 +139,37 @@ export default function BoardDashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle>اقدامات سریع</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-4">
           <Button asChild>
             <Link href={`/boards/${boardId}/decisions/new`} className="gap-2">
               <Plus className="size-4" />
-              New Decision
+              تصمیم جدید
             </Link>
           </Button>
           <Button asChild variant="outline">
             <Link href={`/boards/${boardId}/kanban`} className="gap-2">
               <LayoutGrid className="size-4" />
-              Open Kanban Board
+              باز کردن بورد کانبان
             </Link>
           </Button>
           <Button asChild variant="outline">
             <Link href={`/boards/${boardId}/decisions`} className="gap-2">
               <List className="size-4" />
-              Decision List
+              لیست تصمیمات
             </Link>
           </Button>
           <Button asChild variant="outline">
             <Link href="/reports" className="gap-2">
               <BarChart3 className="size-4" />
-              Reports
+              گزارش‌ها
             </Link>
           </Button>
           <Button asChild variant="outline">
             <Link href={`/boards/${boardId}/settings`} className="gap-2">
               <Settings className="size-4" />
-              Settings
+              تنظیمات
             </Link>
           </Button>
         </CardContent>

@@ -60,13 +60,13 @@ export default function SearchPage() {
 
   return (
     <div className="max-w-5xl space-y-6">
-      <PageHeader title="Search" breadcrumbs={[{ label: "Search", href: "/search" }]} />
+      <PageHeader title="جستجو" breadcrumbs={[{ label: "جستجو", href: "/search" }]} />
 
       <div className="relative">
-        <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <SearchIcon className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          className="h-12 pl-10 text-base"
-          placeholder="Type to search titles, tags, owners..."
+          className="h-12 ps-10 text-base"
+          placeholder="عنوان، تگ، مالک و... را جستجو کنید..."
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
@@ -75,10 +75,10 @@ export default function SearchPage() {
       <div className="flex flex-wrap gap-2">
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
           <SelectTrigger className="w-[170px]">
-            <SelectValue placeholder="Category" />
+            <SelectValue placeholder="دسته‌بندی" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All categories</SelectItem>
+            <SelectItem value="all">همه دسته‌بندی‌ها</SelectItem>
             {categories.map((category) => (
               <SelectItem key={category} value={category}>
                 {category}
@@ -89,38 +89,38 @@ export default function SearchPage() {
 
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[170px]">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder="وضعیت" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="Draft">Draft</SelectItem>
-            <SelectItem value="Ready for Review">Ready for Review</SelectItem>
-            <SelectItem value="Review">Review</SelectItem>
-            <SelectItem value="Approved">Approved</SelectItem>
-            <SelectItem value="Implementing">Implementing</SelectItem>
-            <SelectItem value="Done">Done</SelectItem>
-            <SelectItem value="Reversed">Reversed</SelectItem>
+            <SelectItem value="all">همه وضعیت‌ها</SelectItem>
+            <SelectItem value="Draft">پیش‌نویس</SelectItem>
+            <SelectItem value="Ready for Review">آماده بررسی</SelectItem>
+            <SelectItem value="Review">بررسی</SelectItem>
+            <SelectItem value="Approved">تایید شده</SelectItem>
+            <SelectItem value="Implementing">در حال پیاده‌سازی</SelectItem>
+            <SelectItem value="Done">انجام شده</SelectItem>
+            <SelectItem value="Reversed">برگشت خورده</SelectItem>
           </SelectContent>
         </Select>
 
         <Select value={impactFilter} onValueChange={setImpactFilter}>
           <SelectTrigger className="w-[130px]">
-            <SelectValue placeholder="Impact" />
+            <SelectValue placeholder="تاثیر" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All impacts</SelectItem>
-            <SelectItem value="Low">Low</SelectItem>
-            <SelectItem value="Medium">Medium</SelectItem>
-            <SelectItem value="High">High</SelectItem>
+            <SelectItem value="all">همه تاثیرها</SelectItem>
+            <SelectItem value="Low">کم</SelectItem>
+            <SelectItem value="Medium">متوسط</SelectItem>
+            <SelectItem value="High">زیاد</SelectItem>
           </SelectContent>
         </Select>
 
         <Select value={ownerFilter} onValueChange={setOwnerFilter}>
           <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Owner" />
+            <SelectValue placeholder="مالک" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All owners</SelectItem>
+            <SelectItem value="all">همه مالکان</SelectItem>
             {owners.map((owner) => (
               <SelectItem key={owner} value={owner}>
                 {owner}
@@ -131,20 +131,20 @@ export default function SearchPage() {
 
         <Select value={missingFilter} onValueChange={setMissingFilter}>
           <SelectTrigger className="w-[170px]">
-            <SelectValue placeholder="Missing fields" />
+            <SelectValue placeholder="فیلدهای ناقص" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Missing: Any</SelectItem>
-            <SelectItem value="owner">Missing owner</SelectItem>
-            <SelectItem value="criteria">Missing criteria</SelectItem>
-            <SelectItem value="evidence">Missing evidence</SelectItem>
+            <SelectItem value="all">ناقص: هر کدام</SelectItem>
+            <SelectItem value="owner">بدون مالک</SelectItem>
+            <SelectItem value="criteria">بدون معیار</SelectItem>
+            <SelectItem value="evidence">بدون شواهد</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div className="space-y-6">
         <section>
-          <h2 className="mb-3 font-semibold">Decisions</h2>
+          <h2 className="mb-3 font-semibold">تصمیمات</h2>
           <div className="space-y-2">
             {filteredDecisions.map((decision) => (
               <Card key={decision.id}>
@@ -156,31 +156,31 @@ export default function SearchPage() {
                     <Badge variant="outline">{decision.status}</Badge>
                     <Badge variant="secondary">{decision.category}</Badge>
                     <span className="text-sm text-muted-foreground">
-                      Due: {decision.dueDate || "-"}
+                      سررسید: {decision.dueDate || "-"}
                     </span>
                   </div>
                 </CardContent>
               </Card>
             ))}
             {filteredDecisions.length === 0 && (
-              <p className="text-sm text-muted-foreground">No results</p>
+              <p className="text-sm text-muted-foreground">نتیجه‌ای یافت نشد</p>
             )}
           </div>
         </section>
 
         <section>
-          <h2 className="mb-3 font-semibold">Templates</h2>
+          <h2 className="mb-3 font-semibold">قالب‌ها</h2>
           <div className="space-y-2">
             {filteredTemplates.map((template) => (
               <Card key={template.id}>
                 <CardContent className="p-4">
                   <p className="font-medium">{template.name}</p>
-                  <p className="text-sm text-muted-foreground">{template.criteria.length} criteria</p>
+                  <p className="text-sm text-muted-foreground">{template.criteria.length} معیار</p>
                 </CardContent>
               </Card>
             ))}
             {filteredTemplates.length === 0 && (
-              <p className="text-sm text-muted-foreground">No results</p>
+              <p className="text-sm text-muted-foreground">نتیجه‌ای یافت نشد</p>
             )}
           </div>
         </section>

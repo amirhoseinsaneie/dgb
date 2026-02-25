@@ -5,36 +5,36 @@ export default function HelpPage() {
   return (
     <div className="max-w-3xl space-y-8">
       <PageHeader
-        title="Help"
-        subtitle="Guide to using Decision Governance Board"
-        breadcrumbs={[{ label: "Help", href: "/help" }]}
+        title="راهنما"
+        subtitle="راهنمای استفاده از هیئت حاکمیت تصمیم"
+        breadcrumbs={[{ label: "راهنما", href: "/help" }]}
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>Getting Started</CardTitle>
-          <CardDescription>Recommended flow</CardDescription>
+          <CardTitle>شروع کار</CardTitle>
+          <CardDescription>جریان پیشنهادی</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
-          <p>1. Create a board for your project or team.</p>
-          <p>2. Add decisions with clear owner, criteria, and options.</p>
-          <p>3. Move decisions in Kanban from Draft to Done.</p>
-          <p>4. Use quality gates to prevent risky or incomplete moves.</p>
+          <p>۱. یک بورد برای پروژه یا تیم خود ایجاد کنید.</p>
+          <p>۲. تصمیمات را با مالک، معیار و گزینه‌های مشخص اضافه کنید.</p>
+          <p>۳. تصمیمات را در کانبان از پیش‌نویس تا انجام‌شده جابجا کنید.</p>
+          <p>۴. از دروازه‌های کیفیت برای جلوگیری از جابجایی‌های ناقص یا پرریسک استفاده کنید.</p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Quality Gates</CardTitle>
-          <CardDescription>Default required checks</CardDescription>
+          <CardTitle>دروازه‌های کیفیت</CardTitle>
+          <CardDescription>بررسی‌های اجباری پیش‌فرض</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
-          <p>- Owner required before Review</p>
-          <p>- Criteria required before Review</p>
-          <p>- Due date required before Review</p>
-          <p>- Irreversible decisions require options, risks, and evidence</p>
-          <p>- High impact decisions require approvers</p>
-          <p>- Confidence under threshold requires validation plan</p>
+          <p>- مالک قبل از بررسی الزامی است</p>
+          <p>- معیار قبل از بررسی الزامی است</p>
+          <p>- تاریخ سررسید قبل از بررسی الزامی است</p>
+          <p>- تصمیمات غیرقابل بازگشت نیاز به گزینه‌ها، ریسک‌ها و شواهد دارند</p>
+          <p>- تصمیمات با تاثیر بالا نیاز به تایید‌کنندگان دارند</p>
+          <p>- اطمینان زیر آستانه نیاز به طرح اعتبارسنجی دارد</p>
         </CardContent>
       </Card>
     </div>

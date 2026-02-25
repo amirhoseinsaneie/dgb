@@ -12,6 +12,14 @@ import { useApp } from "@/lib/store";
 import type { Template } from "@/lib/types";
 
 const requiredFieldOptions = ["owner", "due", "criteria", "options", "evidence", "approvers"];
+const requiredFieldLabels: Record<string, string> = {
+  owner: "مالک",
+  due: "سررسید",
+  criteria: "معیار",
+  options: "گزینه‌ها",
+  evidence: "شواهد",
+  approvers: "تایید‌کنندگان",
+};
 
 export default function TemplatesPage() {
   const { templates, addTemplate, updateTemplate } = useApp();
@@ -79,7 +87,7 @@ export default function TemplatesPage() {
   const saveTemplate = () => {
     const payload: Template = {
       id: selectedTemplateId || crypto.randomUUID(),
-      name: templateName || "Untitled Template",
+      name: templateName || "قالب بدون عنوان",
       criteria: criteria.filter((criterion) => criterion.name.trim()),
       requiredFields,
     };
@@ -95,66 +103,66 @@ export default function TemplatesPage() {
   return (
     <div className="max-w-5xl space-y-8">
       <PageHeader
-        title="Templates"
-        subtitle="Criteria templates and decision structure"
-        breadcrumbs={[{ label: "Templates", href: "/templates" }]}
+        title="قالب‌ها"
+        subtitle="قالب‌های معیار و ساختار تصمیم"
+        breadcrumbs={[{ label: "قالب‌ها", href: "/templates" }]}
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Templates List</CardTitle>
-            <CardDescription>Select a template to edit or use</CardDescription>
+            <CardTitle>لیست قالب‌ها</CardTitle>
+            <CardDescription>یک قالب را برای ویرایش یا استفاده انتخاب کنید</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {templates.map((template) => (
               <div key={template.id} className="flex items-center justify-between rounded-lg border p-3">
                 <div>
                   <p className="font-medium">{template.name}</p>
-                  <p className="text-sm text-muted-foreground">{template.criteria.length} criteria</p>
+                  <p className="text-sm text-muted-foreground">{template.criteria.length} معیار</p>
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => openTemplate(template)}>
-                    <Pencil className="mr-2 size-4" />
-                    Edit
+                    <Pencil className="me-2 size-4" />
+                    ویرایش
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => openTemplate(template)}>
-                    <Play className="mr-2 size-4" />
-                    Use
+                    <Play className="me-2 size-4" />
+                    استفاده
                   </Button>
                 </div>
               </div>
             ))}
             <Button variant="outline" onClick={createNewTemplate}>
-              <Plus className="mr-2 size-4" />
-              New template
+              <Plus className="me-2 size-4" />
+              قالب جدید
             </Button>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Template Editor</CardTitle>
-            <CardDescription>{selectedTemplate ? "Edit template" : "Create template"}</CardDescription>
+            <CardTitle>ویرایشگر قالب</CardTitle>
+            <CardDescription>{selectedTemplate ? "ویرایش قالب" : "ایجاد قالب"}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Template name</Label>
+              <Label>نام قالب</Label>
               <Input
                 value={templateName}
                 onChange={(event) => setTemplateName(event.target.value)}
-                placeholder="Template name"
+                placeholder="نام قالب"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Criteria defaults</Label>
+              <Label>معیارهای پیش‌فرض</Label>
               {criteria.map((criterion, index) => (
                 <div key={`${criterion.name}-${index}`} className="flex items-center gap-2">
                   <Input
                     value={criterion.name}
                     onChange={(event) => updateCriterion(index, { name: event.target.value })}
-                    placeholder="Criterion"
+                    placeholder="معیار"
                   />
                   <Input
                     className="w-20"
@@ -170,13 +178,13 @@ export default function TemplatesPage() {
                 </div>
               ))}
               <Button variant="outline" size="sm" onClick={addCriterion}>
-                <Plus className="mr-2 size-4" />
-                Add criterion
+                <Plus className="me-2 size-4" />
+                افزودن معیار
               </Button>
             </div>
 
             <div className="space-y-2">
-              <Label>Required fields</Label>
+              <Label>فیلدهای اجباری</Label>
               <div className="grid gap-2 sm:grid-cols-2">
                 {requiredFieldOptions.map((field) => (
                   <label key={field} className="flex items-center gap-2 text-sm">
@@ -184,13 +192,13 @@ export default function TemplatesPage() {
                       checked={requiredFields.includes(field)}
                       onCheckedChange={() => toggleRequiredField(field)}
                     />
-                    {field}
+                    {requiredFieldLabels[field] || field}
                   </label>
                 ))}
               </div>
             </div>
 
-            <Button onClick={saveTemplate}>Save</Button>
+            <Button onClick={saveTemplate}>ذخیره</Button>
           </CardContent>
         </Card>
       </div>

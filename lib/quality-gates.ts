@@ -4,135 +4,95 @@ export interface QualityCheck {
   id: string;
   label: string;
   passed: boolean;
-  required: boolean;
 }
 
-export function checkDecisionQuality(
-  decision: Decision,
-  board: Board
-): { checks: QualityCheck[]; score: number } {
+export interface QualityResult {
+  score: number;
+  checks: QualityCheck[];
+}
+
+export function checkDecisionQuality(decision: Decision, board: Board): QualityResult {
   const checks: QualityCheck[] = [];
-  const qualityGates = board.qualityGates.filter((g) => g.enabled);
 
-  const ownerRequired = qualityGates.some((g) =>
-    g.label.toLowerCase().includes("owner")
-  );
-  const ownerPassed = !!decision.ownerId;
-  if (ownerRequired) {
-    checks.push({
-      id: "owner",
-      label: "Owner",
-      passed: ownerPassed,
-      required: true,
-    });
-  }
+  // 1. Owner
+  checks.push({
+    id: "owner",
+    label: "دارای مالک",
+    passed: !!decision.ownerId,
+  });
 
-  const criteriaRequired = qualityGates.some((g) =>
-    g.label.toLowerCase().includes("criteria")
-  );
-  const criteriaPassed =
-    decision.criteria && decision.criteria.length > 0;
-  if (criteriaRequired) {
-    checks.push({
-      id: "criteria",
-      label: "Criteria",
-      passed: criteriaPassed,
-      required: true,
-    });
-  }
+  // 2. Criteria
+  checks.push({
+    id: "criteria",
+    label: "دارای معیار",
+    passed: decision.criteria && decision.criteria.length > 0,
+  });
 
-  const dueRequired = qualityGates.some((g) =>
-    g.label.toLowerCase().includes("due")
-  );
-  const duePassed = !!decision.dueDate;
-  if (dueRequired) {
-    checks.push({
-      id: "due",
-      label: "Due date",
-      passed: duePassed,
-      required: true,
-    });
-  }
+  // 3. Due Date
+  checks.push({
+    id: "due",
+    label: "دارای تاریخ سررسید",
+    passed: !!decision.dueDate,
+  });
 
-  const optionsRequired =
-    decision.reversible === false
-      ? qualityGates.some((g) =>
-          g.label.toLowerCase().includes("irreversible")
-        )
-      : false;
-  const optionsPassed =
-    decision.options && decision.options.length >= 2;
-  const evidencePassed =
-    !!decision.keyRisksMitigations &&
-    !!decision.evidenceLinks &&
-    decision.evidenceLinks.length > 0;
-
-  if (optionsRequired) {
-    checks.push({
-      id: "options",
-      label: "Options (2+)",
-      passed: optionsPassed,
-      required: true,
-    });
+  // 4. Irreversible Evidence
+  if (!decision.reversible) {
     checks.push({
       id: "evidence",
-      label: "Evidence & Risks",
-      passed: evidencePassed,
-      required: true,
+      label: "شواهد برای موارد غیرقابل بازگشت",
+      passed: !!(decision.keyRisksMitigations && decision.evidenceLinks?.length),
+    });
+  } else {
+    checks.push({
+      id: "evidence",
+      label: "شواهد (اختیاری برای قابل بازگشت)",
+      passed: true,
     });
   }
 
-  const impactRank: Record<"Low" | "Medium" | "High", number> = {
-    Low: 1,
-    Medium: 2,
-    High: 3,
-  };
-  const highImpactLevel = board.highImpactLevel ?? "High";
-  const approversRequired =
-    impactRank[decision.impact] >= impactRank[highImpactLevel] &&
-    qualityGates.some((g) =>
-      g.label.toLowerCase().includes("high impact")
-    );
-  const approversPassed =
-    !!decision.approverIds && decision.approverIds.length > 0;
-  if (approversRequired) {
+  // 5. High Impact Approvers
+  if (decision.impact === "High") {
     checks.push({
       id: "approvers",
-      label: "Approvers",
-      passed: approversPassed,
-      required: true,
+      label: "تایید‌کنندگان برای تاثیر بالا",
+      passed: !!(decision.approverIds && decision.approverIds.length > 0),
+    });
+  } else {
+    checks.push({
+      id: "approvers",
+      label: "تایید‌کنندگان (اختیاری)",
+      passed: true,
     });
   }
 
-  const validationRequired =
-    decision.confidence < (board.confidenceThreshold ?? 60) &&
-    qualityGates.some((g) =>
-      g.label.toLowerCase().includes("confidence")
-    );
-  if (validationRequired) {
+  // 6. Confidence Validation
+  if (decision.confidence < 60) {
     checks.push({
       id: "validation",
-      label: "Validation plan",
+      label: "طرح اعتبارسنجی برای اطمینان پایین",
       passed: !!decision.validationPlan?.trim(),
-      required: true,
     });
   }
 
-  const total = checks.length;
-  const passed = checks.filter((c) => c.passed).length;
-  const score = total > 0 ? Math.round((passed / total) * 100) : 0;
+  const passedCount = checks.filter((c) => c.passed).length;
+  const score = Math.round((passedCount / checks.length) * 100);
 
-  return { checks, score };
+  return { score, checks };
 }
 
-export function canMoveToReview(
-  decision: Decision,
-  board: Board
-): { allowed: boolean; missing: string[] } {
-  const { checks } = checkDecisionQuality(decision, board);
-  const requiredFailed = checks.filter((c) => c.required && !c.passed);
-  return {
-    allowed: requiredFailed.length === 0,
-    missing: requiredFailed.map((c) => c.label),
-  };
+export function canMoveToReview(decision: Decision, board: Board): { can: boolean; reason?: string } {
+  const quality = checkDecisionQuality(decision, board);
+  
+  if (quality.score < 80) {
+    return {
+      can: false,
+      reason: "امتیاز کیفیت باید حداقل ۸۰ باشد تا به مرحله بررسی برود.",
+    };
+  }
+
+  if (!decision.ownerId) {
+    return { can: false, reason: "مالک الزامی است." };
+  }
+
+  return { can: true };
 }

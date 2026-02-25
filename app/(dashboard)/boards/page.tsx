@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Archive, Copy, ExternalLink, MoreHorizontal, Plus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { faIR } from "date-fns/locale";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,13 +52,13 @@ export default function BoardsListPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Boards"
-        breadcrumbs={[{ label: "Boards", href: "/boards" }]}
+        title="بوردها"
+        breadcrumbs={[{ label: "بوردها", href: "/boards" }]}
         actions={
           <Button asChild>
             <Link href="/boards/create" className="gap-2">
               <Plus className="size-4" />
-              Create Board
+              ایجاد بورد
             </Link>
           </Button>
         }
@@ -65,28 +66,28 @@ export default function BoardsListPage() {
 
       <div className="flex flex-wrap gap-4">
         <Input
-          placeholder="Search..."
+          placeholder="جستجو..."
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           className="max-w-xs"
         />
         <Select value={sort} onValueChange={(value) => setSort(value as "updated" | "name")}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Sort" />
+            <SelectValue placeholder="مرتب‌سازی" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="updated">Recently updated</SelectItem>
-            <SelectItem value="name">Name</SelectItem>
+            <SelectItem value="updated">آخرین بروزرسانی</SelectItem>
+            <SelectItem value="name">نام</SelectItem>
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as "all" | "Active" | "Archived")}>
           <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder="وضعیت" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="Active">Active</SelectItem>
-            <SelectItem value="Archived">Archived</SelectItem>
+            <SelectItem value="all">همه</SelectItem>
+            <SelectItem value="Active">فعال</SelectItem>
+            <SelectItem value="Archived">بایگانی‌شده</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -95,12 +96,12 @@ export default function BoardsListPage() {
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon" />
-            <EmptyTitle>No boards created yet</EmptyTitle>
-            <EmptyDescription>Create a board to get started.</EmptyDescription>
+            <EmptyTitle>هنوز بوردی ایجاد نشده است</EmptyTitle>
+            <EmptyDescription>برای شروع یک بورد ایجاد کنید.</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button asChild>
-              <Link href="/boards/create">Create Board</Link>
+              <Link href="/boards/create">ایجاد بورد</Link>
             </Button>
           </EmptyContent>
         </Empty>
@@ -109,11 +110,11 @@ export default function BoardsListPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Board Name</TableHead>
-                <TableHead>Project</TableHead>
-                <TableHead>Decisions Open</TableHead>
-                <TableHead>Overdue</TableHead>
-                <TableHead>Last update</TableHead>
+                <TableHead>نام بورد</TableHead>
+                <TableHead>پروژه</TableHead>
+                <TableHead>تصمیمات باز</TableHead>
+                <TableHead>عقب‌افتاده</TableHead>
+                <TableHead>آخرین بروزرسانی</TableHead>
                 <TableHead className="w-[70px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -142,7 +143,7 @@ export default function BoardsListPage() {
                     <TableCell>{openCount}</TableCell>
                     <TableCell>{overdueCount}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {formatDistanceToNow(new Date(board.updatedAt), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(board.updatedAt), { addSuffix: true, locale: faIR })}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -155,16 +156,16 @@ export default function BoardsListPage() {
                           <DropdownMenuItem asChild>
                             <Link href={`/boards/${board.id}`} className="flex items-center gap-2">
                               <ExternalLink className="size-4" />
-                              Open
+                              باز کردن
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem className="gap-2">
                             <Copy className="size-4" />
-                            Duplicate
+                            تکثیر
                           </DropdownMenuItem>
                           <DropdownMenuItem variant="destructive" className="gap-2">
                             <Archive className="size-4" />
-                            Archive
+                            بایگانی
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

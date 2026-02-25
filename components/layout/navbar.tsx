@@ -14,11 +14,11 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/boards", label: "Boards", icon: LayoutDashboard },
-  { href: "/boards/1/decisions", label: "Decisions", icon: FileText },
-  { href: "/reports", label: "Reports", icon: BarChart3 },
-  { href: "/templates", label: "Templates", icon: FileStack },
-  { href: "/help", label: "Help", icon: HelpCircle },
+  { href: "/boards", label: "بوردها", icon: LayoutDashboard },
+  { href: "/boards/1/decisions", label: "تصمیمات", icon: FileText },
+  { href: "/reports", label: "گزارش‌ها", icon: BarChart3 },
+  { href: "/templates", label: "قالب‌ها", icon: FileStack },
+  { href: "/help", label: "راهنما", icon: HelpCircle },
 ];
 
 export function Navbar() {
@@ -28,7 +28,7 @@ export function Navbar() {
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center gap-4 px-4">
         <Link href="/" className="shrink-0 text-lg font-semibold">
-          DecisionGov
+          حاکمیت تصمیم
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
@@ -46,34 +46,34 @@ export function Navbar() {
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ms-auto flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
-                Context: Project X
+                زمینه: پروژه X
                 <ChevronDown className="size-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild>
-                <Link href="/boards/1">Project X</Link>
+                <Link href="/boards/1">پروژه X</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/boards/2">Platform Team</Link>
+                <Link href="/boards/2">تیم پلتفرم</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           <Link href="/search" className="hidden lg:block">
             <div className="relative w-56">
-              <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input className="h-8 pl-8" placeholder="Search..." readOnly />
+              <Search className="absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input className="h-8 ps-8" placeholder="جستجو..." readOnly />
             </div>
           </Link>
 
           <Button variant="ghost" size="icon">
             <User className="size-4" />
-            <span className="sr-only">Profile</span>
+            <span className="sr-only">پروفایل</span>
           </Button>
         </div>
       </div>
