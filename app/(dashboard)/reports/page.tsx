@@ -5,7 +5,6 @@ import { BarChart3, FileDown, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ChartConfig,
   ChartContainer,
@@ -27,7 +26,7 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function ReportsPage() {
-  const { boards, decisions } = useApp();
+  const { decisions } = useApp();
   const [reportType, setReportType] = useState("health");
 
   const withOwner = decisions.filter((d) => d.ownerId).length;
@@ -66,6 +65,20 @@ export default function ReportsPage() {
     name,
     value,
   }));
+  const impactData = decisions.reduce<Record<string, number>>((acc, decision) => {
+    acc[decision.impact] = (acc[decision.impact] || 0) + 1;
+    return acc;
+  }, {});
+  const missingFieldCounts = {
+    owner: decisions.filter((decision) => !decision.ownerId).length,
+    criteria: decisions.filter((decision) => decision.criteria.length === 0).length,
+    dueDate: decisions.filter((decision) => !decision.dueDate).length,
+    evidence: decisions.filter(
+      (decision) =>
+        !decision.reversible &&
+        (!decision.evidenceLinks?.length || !decision.keyRisksMitigations)
+    ).length,
+  };
 
   return (
     <div className="space-y-8">
@@ -227,6 +240,32 @@ export default function ReportsPage() {
                 </p>
               )}
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Most Common Missing Fields</CardTitle>
+            <CardDescription>Quality coverage hotspots</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <p>Owner: {missingFieldCounts.owner}</p>
+            <p>Criteria: {missingFieldCounts.criteria}</p>
+            <p>Due date: {missingFieldCounts.dueDate}</p>
+            <p>Evidence (irreversible): {missingFieldCounts.evidence}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Decisions by Impact</CardTitle>
+            <CardDescription>Low / Medium / High</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <p>Low: {impactData.Low || 0}</p>
+            <p>Medium: {impactData.Medium || 0}</p>
+            <p>High: {impactData.High || 0}</p>
           </CardContent>
         </Card>
       </div>

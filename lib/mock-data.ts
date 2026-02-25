@@ -1,4 +1,4 @@
-import type { Board, Decision, User, Template } from "./types";
+import type { Board, Decision, Template, User } from "./types";
 
 export const users: User[] = [
   { id: "1", name: "Amir", email: "amir@example.com" },
@@ -38,19 +38,19 @@ export const defaultQualityGates = [
   {
     id: "4",
     label: "Irreversible requires Options + Risks + Evidence",
-    description: "If Irreversible ⇒ must include Options + Risks + Evidence",
+    description: "If Irreversible => must include Options + Risks + Evidence",
     enabled: true,
   },
   {
     id: "5",
     label: "High impact requires Approvers",
-    description: "If High impact ⇒ must include Approvers list",
+    description: "If High impact => must include Approvers list",
     enabled: true,
   },
   {
     id: "6",
     label: "Low confidence requires Validation plan",
-    description: "If Confidence < 60% ⇒ must include Experiment/Validation plan",
+    description: "If Confidence < 60% => add Experiment/Validation plan",
     enabled: true,
   },
 ];
@@ -71,6 +71,8 @@ export const boards: Board[] = [
     project: "Project X",
     categories: defaultCategories,
     qualityGates: defaultQualityGates,
+    highImpactLevel: "High",
+    confidenceThreshold: 60,
     columns: defaultColumns,
     createdAt: "2026-02-01T00:00:00Z",
     updatedAt: "2026-02-18T00:00:00Z",
@@ -84,6 +86,8 @@ export const boards: Board[] = [
     project: "Platform",
     categories: defaultCategories,
     qualityGates: defaultQualityGates,
+    highImpactLevel: "High",
+    confidenceThreshold: 60,
     columns: defaultColumns,
     createdAt: "2026-02-05T00:00:00Z",
     updatedAt: "2026-02-17T00:00:00Z",
@@ -102,6 +106,7 @@ export const decisions: Decision[] = [
     urgency: "Medium",
     ownerId: "1",
     ownerName: "Amir",
+    approverIds: ["2", "3"],
     status: "Review",
     criteria: [
       { id: "c1", name: "Value", weight: 4, notes: "Business value" },
@@ -115,6 +120,7 @@ export const decisions: Decision[] = [
         pros: "Fast",
         cons: "Risky",
         risk: "High downtime",
+        costTimeEstimate: "2 weeks, high outage risk",
       },
       {
         id: "o2",
@@ -122,6 +128,7 @@ export const decisions: Decision[] = [
         pros: "Lower risk",
         cons: "Longer",
         risk: "Medium",
+        costTimeEstimate: "6 weeks, phased migration",
       },
     ],
     confidence: 70,
@@ -142,8 +149,9 @@ export const decisions: Decision[] = [
     status: "Draft",
     criteria: [{ id: "c1", name: "Maintainability", weight: 5 }],
     options: [],
-    confidence: 0,
+    confidence: 50,
     reversible: true,
+    validationPlan: "",
     dueDate: "2026-03-05",
     createdAt: "2026-02-15T00:00:00Z",
     updatedAt: "2026-02-15T00:00:00Z",
@@ -187,6 +195,7 @@ export const decisions: Decision[] = [
     criteria: [],
     options: [],
     confidence: 0,
+    validationPlan: "",
     reversible: true,
     dueDate: "2026-03-01",
     createdAt: "2026-02-10T00:00:00Z",

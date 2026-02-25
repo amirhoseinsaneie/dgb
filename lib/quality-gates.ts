@@ -62,7 +62,6 @@ export function checkDecisionQuality(
       : false;
   const optionsPassed =
     decision.options && decision.options.length >= 2;
-  const evidenceRequired = decision.reversible === false && optionsRequired;
   const evidencePassed =
     !!decision.keyRisksMitigations &&
     !!decision.evidenceLinks &&
@@ -83,8 +82,14 @@ export function checkDecisionQuality(
     });
   }
 
+  const impactRank: Record<"Low" | "Medium" | "High", number> = {
+    Low: 1,
+    Medium: 2,
+    High: 3,
+  };
+  const highImpactLevel = board.highImpactLevel ?? "High";
   const approversRequired =
-    decision.impact === "High" &&
+    impactRank[decision.impact] >= impactRank[highImpactLevel] &&
     qualityGates.some((g) =>
       g.label.toLowerCase().includes("high impact")
     );
@@ -100,7 +105,7 @@ export function checkDecisionQuality(
   }
 
   const validationRequired =
-    decision.confidence < 60 &&
+    decision.confidence < (board.confidenceThreshold ?? 60) &&
     qualityGates.some((g) =>
       g.label.toLowerCase().includes("confidence")
     );
@@ -108,7 +113,7 @@ export function checkDecisionQuality(
     checks.push({
       id: "validation",
       label: "Validation plan",
-      passed: false,
+      passed: !!decision.validationPlan?.trim(),
       required: true,
     });
   }

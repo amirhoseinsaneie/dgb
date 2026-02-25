@@ -33,6 +33,8 @@ export interface Board {
   project?: string;
   categories: DecisionCategory[];
   qualityGates: QualityGate[];
+  highImpactLevel?: Impact;
+  confidenceThreshold?: number;
   columns: string[];
   createdAt: string;
   updatedAt: string;
@@ -72,6 +74,7 @@ export interface Decision {
   criteria: Criterion[];
   options: Option[];
   confidence: number;
+  validationPlan?: string;
   reversible: boolean;
   keyRisksMitigations?: string;
   evidenceLinks?: string[];

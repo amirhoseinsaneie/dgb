@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -14,9 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   defaultCategories,
   defaultColumns,
@@ -28,45 +29,86 @@ import type { Board } from "@/lib/types";
 export default function CreateBoardPage() {
   const router = useRouter();
   const { addBoard } = useApp();
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [method, setMethod] = useState<string>("");
+  const [method, setMethod] = useState<Board["method"] | "">("");
+  const [availableCategories, setAvailableCategories] = useState<string[]>(defaultCategories);
   const [categories, setCategories] = useState<string[]>(defaultCategories);
+  const [newCategory, setNewCategory] = useState("");
   const [qualityGates, setQualityGates] = useState(
-    defaultQualityGates.map((g) => ({ ...g, enabled: true }))
+    defaultQualityGates.map((gate) => ({ ...gate, enabled: true }))
   );
-  const [columns, setColumns] = useState(defaultColumns);
+  const [columns, setColumns] = useState<string[]>(defaultColumns);
+  const [newColumn, setNewColumn] = useState("");
+  const [highImpactLevel, setHighImpactLevel] = useState<Board["highImpactLevel"]>("High");
+  const [confidenceThreshold, setConfidenceThreshold] = useState(60);
 
-  const toggleCategory = (cat: string) => {
-    setCategories((prev) =>
-      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+  const toggleCategory = (category: string) => {
+    setCategories((current) =>
+      current.includes(category)
+        ? current.filter((item) => item !== category)
+        : [...current, category]
     );
+  };
+
+  const addCustomCategory = () => {
+    const candidate = newCategory.trim();
+    if (!candidate || availableCategories.includes(candidate)) return;
+    setAvailableCategories((current) => [...current, candidate]);
+    setCategories((current) => [...current, candidate]);
+    setNewCategory("");
   };
 
   const toggleQualityGate = (id: string) => {
-    setQualityGates((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, enabled: !g.enabled } : g))
+    setQualityGates((current) =>
+      current.map((gate) =>
+        gate.id === id ? { ...gate, enabled: !gate.enabled } : gate
+      )
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const moveColumn = (index: number, direction: "up" | "down") => {
+    const target = direction === "up" ? index - 1 : index + 1;
+    if (target < 0 || target >= columns.length) return;
+    const next = [...columns];
+    [next[index], next[target]] = [next[target], next[index]];
+    setColumns(next);
+  };
+
+  const renameColumn = (index: number, value: string) => {
+    setColumns((current) =>
+      current.map((column, columnIndex) => (columnIndex === index ? value : column))
+    );
+  };
+
+  const removeColumn = (index: number) => {
+    setColumns((current) => current.filter((_, columnIndex) => columnIndex !== index));
+  };
+
+  const addColumn = () => {
+    const candidate = newColumn.trim();
+    if (!candidate || columns.includes(candidate)) return;
+    setColumns((current) => [...current, candidate]);
+    setNewColumn("");
+  };
+
+  const createBoard = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const now = new Date().toISOString();
     const board: Board = {
       id: crypto.randomUUID(),
       name,
       description: description || undefined,
-      method: method as Board["method"],
+      method: method || undefined,
       project: name,
       categories,
-      qualityGates: qualityGates.map(({ id, label, description: desc, enabled }) => ({
-        id,
-        label,
-        description: desc,
-        enabled,
-      })),
+      qualityGates,
+      highImpactLevel,
+      confidenceThreshold,
       columns,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
       status: "Active",
     };
     addBoard(board);
@@ -74,50 +116,38 @@ export default function CreateBoardPage() {
   };
 
   return (
-    <div className="max-w-3xl space-y-8">
+    <div className="max-w-4xl space-y-8">
       <PageHeader
         title="Create Board"
-        subtitle="Specify name, roles, and decision quality rules"
+        subtitle="Set board details, decision categories, and quality gates"
         breadcrumbs={[
           { label: "Boards", href: "/boards" },
           { label: "Create", href: "/boards/create" },
         ]}
       />
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form className="space-y-8" onSubmit={createBoard}>
         <Card>
           <CardHeader>
-            <CardTitle>Board Info</CardTitle>
-            <CardDescription>Basic board information</CardDescription>
+            <CardTitle>Section A: Board Info</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Board name *</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Project X"
-                required
-              />
+              <Label>Board name *</Label>
+              <Input value={name} onChange={(event) => setName(event.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description (optional)</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Board description"
-                rows={3}
-              />
+              <Label>Description (optional)</Label>
+              <Textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={3} />
             </div>
             <div className="space-y-2">
-              <Label>Method (optional)</Label>
-              <Select value={method} onValueChange={setMethod}>
+              <Label>Method</Label>
+              <Select value={method || "none"} onValueChange={(value) => setMethod(value === "none" ? "" : (value as Board["method"]))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select method" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">No method</SelectItem>
                   <SelectItem value="Scrum">Scrum</SelectItem>
                   <SelectItem value="Kanban">Kanban</SelectItem>
                   <SelectItem value="Hybrid">Hybrid</SelectItem>
@@ -129,63 +159,116 @@ export default function CreateBoardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Decision Categories</CardTitle>
-            <CardDescription>Decision type</CardDescription>
+            <CardTitle>Section B: Decision Categories</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {defaultCategories.map((cat) => (
-              <div key={cat} className="flex items-center gap-2">
+            {availableCategories.map((category) => (
+              <label key={category} className="flex items-center gap-2 text-sm">
                 <Checkbox
-                  id={`cat-${cat}`}
-                  checked={categories.includes(cat)}
-                  onCheckedChange={() => toggleCategory(cat)}
+                  checked={categories.includes(category)}
+                  onCheckedChange={() => toggleCategory(category)}
                 />
-                <Label htmlFor={`cat-${cat}`} className="font-normal cursor-pointer">
-                  {cat}
-                </Label>
-              </div>
+                {category}
+              </label>
             ))}
-            <Button type="button" variant="outline" size="sm">
-              Add custom category
-            </Button>
+            <div className="flex gap-2">
+              <Input
+                value={newCategory}
+                onChange={(event) => setNewCategory(event.target.value)}
+                placeholder="Add custom category"
+              />
+              <Button type="button" variant="outline" onClick={addCustomCategory}>
+                Add
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Quality Gates</CardTitle>
-            <CardDescription>Required rules</CardDescription>
+            <CardTitle>Section C: Quality Gates</CardTitle>
+            <CardDescription>Required rules before status changes</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-2">
             {qualityGates.map((gate) => (
-              <div key={gate.id} className="flex items-center gap-2">
+              <label key={gate.id} className="flex items-start gap-2 text-sm">
                 <Checkbox
-                  id={`gate-${gate.id}`}
                   checked={gate.enabled}
                   onCheckedChange={() => toggleQualityGate(gate.id)}
                 />
-                <Label htmlFor={`gate-${gate.id}`} className="font-normal cursor-pointer">
-                  {gate.label}
-                </Label>
-              </div>
+                <span>{gate.label}</span>
+              </label>
             ))}
+            <div className="grid gap-3 pt-2 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>High impact threshold</Label>
+                <Select
+                  value={highImpactLevel || "High"}
+                  onValueChange={(value) => setHighImpactLevel(value as Board["highImpactLevel"])}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Low">Low</SelectItem>
+                    <SelectItem value="Medium">Medium</SelectItem>
+                    <SelectItem value="High">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Confidence threshold</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={confidenceThreshold}
+                  onChange={(event) => setConfidenceThreshold(Number(event.target.value || 60))}
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Default Columns</CardTitle>
-            <CardDescription>Kanban board columns (editable)</CardDescription>
+            <CardTitle>Section D: Default Columns</CardTitle>
+            <CardDescription>Editable order and names</CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground text-sm">
-              {columns.join(" → ")}
-            </p>
+          <CardContent className="space-y-3">
+            {columns.map((column, index) => (
+              <div key={`${column}-${index}`} className="flex items-center gap-2">
+                <Input
+                  value={column}
+                  onChange={(event) => renameColumn(index, event.target.value)}
+                />
+                <Button type="button" variant="outline" size="icon" onClick={() => moveColumn(index, "up")}>
+                  <ArrowUp className="size-4" />
+                </Button>
+                <Button type="button" variant="outline" size="icon" onClick={() => moveColumn(index, "down")}>
+                  <ArrowDown className="size-4" />
+                </Button>
+                <Button type="button" variant="outline" size="icon" onClick={() => removeColumn(index)}>
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            ))}
+            <div className="flex gap-2">
+              <Input
+                value={newColumn}
+                onChange={(event) => setNewColumn(event.target.value)}
+                placeholder="Add column"
+              />
+              <Button type="button" variant="outline" onClick={addColumn}>
+                <Plus className="mr-2 size-4" />
+                Add
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
         <div className="flex justify-between">
-          <Button type="button" variant="outline" asChild>
+          <Button asChild type="button" variant="outline">
             <Link href="/boards">Cancel</Link>
           </Button>
           <Button type="submit">Create Board</Button>
