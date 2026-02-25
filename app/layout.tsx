@@ -3,6 +3,7 @@ import { Vazirmatn } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/lib/store";
 import { ThemeProvider } from "@/components/providers";
+import { DirectionProvider } from "@/components/ui/direction";
 import { Toaster } from "@/components/ui/sonner";
 
 const vazirmatn = Vazirmatn({
@@ -22,15 +23,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning>
-      <body
-        className={`${vazirmatn.variable} antialiased`}
-      >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <AppProvider>
-            {children}
-            <Toaster />
-          </AppProvider>
-        </ThemeProvider>
+      <body className={`${vazirmatn.className} ${vazirmatn.variable} font-sans antialiased`}>
+        <DirectionProvider direction="rtl">
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <AppProvider>
+              {children}
+              <Toaster />
+            </AppProvider>
+          </ThemeProvider>
+        </DirectionProvider>
       </body>
     </html>
   );
