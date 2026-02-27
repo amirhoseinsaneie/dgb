@@ -6,7 +6,7 @@ export default function HelpPage() {
     <div className="max-w-3xl space-y-8">
       <PageHeader
         title="راهنما"
-        subtitle="راهنمای استفاده از هیئت حاکمیت تصمیم"
+        subtitle="راهنمای استفاده از سامانه مدیریت تصمیم"
         breadcrumbs={[{ label: "راهنما", href: "/help" }]}
       />
 

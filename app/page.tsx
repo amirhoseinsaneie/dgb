@@ -17,7 +17,7 @@ export default function LandingPage() {
     <AppLayout>
       <div className="max-w-4xl mx-auto space-y-8">
         <PageHeader
-          title="هیئت حاکمیت تصمیم"
+          title="سامانه مدیریت تصمیم"
           subtitle="ثبت، استانداردسازی و پیگیری تصمیمات کلیدی در تیم‌های چابک"
         />
 

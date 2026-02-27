@@ -8,9 +8,8 @@ import {
 } from "lucide-react"
 import {
   DayPicker,
-  getDefaultClassNames,
-  type DayButton,
-} from "react-day-picker"
+} from "react-day-picker/persian"
+import { getDefaultClassNames, type DayButton } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -39,11 +38,7 @@ function Calendar({
         className
       )}
       captionLayout={captionLayout}
-      formatters={{
-        formatMonthDropdown: (date) =>
-          date.toLocaleString("default", { month: "short" }),
-        ...formatters,
-      }}
+      formatters={formatters}
       classNames={{
         root: cn("w-fit", defaultClassNames.root),
         months: cn(
