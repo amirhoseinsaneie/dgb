@@ -594,7 +594,7 @@ export default function DecisionDetailPage() {
                   <div className="space-y-1">
                     <Label className="text-[11px] text-muted-foreground">دسته‌بندی</Label>
                     <Select value={category} onValueChange={setCategory}>
-                      <SelectTrigger className="h-9"><SelectValue placeholder="انتخاب" /></SelectTrigger>
+                      <SelectTrigger className="h-9 w-full"><SelectValue placeholder="انتخاب" /></SelectTrigger>
                       <SelectContent>
                         {board.categories.map((item) => (
                           <SelectItem key={item} value={item}>{item}</SelectItem>
@@ -605,7 +605,7 @@ export default function DecisionDetailPage() {
                   <div className="space-y-1">
                     <Label className="text-[11px] text-muted-foreground">تاثیر</Label>
                     <Select value={impact} onValueChange={(value) => setImpact(value as Decision["impact"])}>
-                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Low">کم</SelectItem>
                         <SelectItem value="Medium">متوسط</SelectItem>
@@ -616,7 +616,7 @@ export default function DecisionDetailPage() {
                   <div className="space-y-1">
                     <Label className="text-[11px] text-muted-foreground">فوریت</Label>
                     <Select value={urgency} onValueChange={(value) => setUrgency(value as NonNullable<Decision["urgency"]>)}>
-                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Low">کم</SelectItem>
                         <SelectItem value="Medium">متوسط</SelectItem>
@@ -641,7 +641,7 @@ export default function DecisionDetailPage() {
                   <div className="space-y-1" id="owner-field">
                     <Label className="text-[11px] text-muted-foreground">مالک</Label>
                     <Select value={ownerId || "__none"} onValueChange={(value) => setOwnerId(value === "__none" ? "" : value)}>
-                      <SelectTrigger className="h-9"><SelectValue placeholder="انتخاب" /></SelectTrigger>
+                      <SelectTrigger className="h-9 w-full"><SelectValue placeholder="انتخاب" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none">بدون مالک</SelectItem>
                         {users.map((user) => (
