@@ -1,0 +1,115 @@
+[
+  {
+    "id": "d1",
+    "boardId": "1",
+    "title": "انتخاب پایگاه داده برای سرویس اعلان",
+    "problemStatement": "برای رشد سرویس اعلان به گزینه‌ای نیاز داریم که هم مقیاس‌پذیر باشد و هم هزینه نگهداری معقولی داشته باشد.",
+    "status": "Review",
+    "category": "معماری",
+    "impact": "High",
+    "ownerId": "1",
+    "ownerName": "امیرحسین",
+    "contributorIds": [
+      "2"
+    ],
+    "approverIds": [
+      "3",
+      "4"
+    ],
+    "dueDate": "2024-03-01",
+    "criteria": [
+      {
+        "id": "c1",
+        "name": "مقیاس‌پذیری",
+        "weight": 5,
+        "notes": "باید حجم بالای نوشتن را پشتیبانی کند."
+      },
+      {
+        "id": "c2",
+        "name": "هزینه",
+        "weight": 3
+      }
+    ],
+    "options": [
+      {
+        "id": "o1",
+        "title": "PostgreSQL",
+        "pros": "پایدار و با اکوسیستم بالغ",
+        "cons": "نیاز به نگهداری بیشتر",
+        "risk": "متوسط"
+      },
+      {
+        "id": "o2",
+        "title": "MongoDB",
+        "pros": "انعطاف بالا در ساختار داده",
+        "cons": "نیاز به کنترل بیشتر برای سازگاری داده",
+        "risk": "کم"
+      }
+    ],
+    "confidence": 80,
+    "reversible": true,
+    "createdAt": "2024-02-10T09:00:00Z",
+    "updatedAt": "2026-02-26T23:19:09.393Z",
+    "chosenOptionId": "o1",
+    "urgency": "Medium",
+    "reviewMeetingDate": "2026-03-29"
+  },
+  {
+    "id": "c594a5c1-d57a-4df8-bb86-9a1cfd77c292",
+    "boardId": "1",
+    "title": "تغییر تکنولوژی",
+    "problemStatement": "نیاز به بهبود زیرساخت داریم.",
+    "status": "Draft",
+    "category": "معماری",
+    "impact": "Medium",
+    "ownerId": "1",
+    "ownerName": "امیرحسین",
+    "contributorIds": [],
+    "approverIds": [],
+    "dueDate": "2026-02-25",
+    "criteria": [],
+    "options": [],
+    "confidence": 80,
+    "reversible": true,
+    "createdAt": "2026-02-25T19:57:40.532Z",
+    "updatedAt": "2026-02-27T09:28:05.978Z"
+  },
+  {
+    "id": "fa291add-86d2-464b-902f-14c78da58be9",
+    "boardId": "1",
+    "title": "نمونه آزمایشی",
+    "problemStatement": "متن نمونه",
+    "status": "Draft",
+    "category": "معماری",
+    "impact": "Medium",
+    "ownerId": "2",
+    "ownerName": "سارا احمدی",
+    "contributorIds": [],
+    "approverIds": [],
+    "criteria": [
+      {
+        "id": "e18e7b05-8915-4d9d-827e-cc906db6aaab",
+        "name": "تتنمتنت",
+        "weight": 3
+      }
+    ],
+    "options": [
+      {
+        "id": "6eb6f28a-a554-4b1b-a8fe-98fdb7959628",
+        "title": "بسشب",
+        "pros": "شسبسشب",
+        "cons": "شسبشسب",
+        "risk": "شسبشسب"
+      }
+    ],
+    "confidence": 80,
+    "reversible": false,
+    "createdAt": "2026-02-26T20:53:54.215Z",
+    "updatedAt": "2026-02-26T22:46:07.440Z",
+    "keyRisksMitigations": "شسب",
+    "evidenceLinks": [
+      "شسیشس"
+    ],
+    "chosenOptionId": "6eb6f28a-a554-4b1b-a8fe-98fdb7959628"
+  }
+]

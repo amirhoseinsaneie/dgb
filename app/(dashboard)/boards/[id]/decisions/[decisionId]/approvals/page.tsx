@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { users } from "@/lib/mock-data";
 import { useApp } from "@/lib/store";
 
 type ApprovalStatus = "Approved" | "Pending" | "Rejected";
@@ -25,7 +24,7 @@ export default function ApprovalPage() {
   const params = useParams();
   const boardId = params.id as string;
   const decisionId = params.decisionId as string;
-  const { getBoard, getDecision } = useApp();
+  const { getBoard, getDecision, users } = useApp();
   const board = getBoard(boardId);
   const decision = getDecision(decisionId);
 

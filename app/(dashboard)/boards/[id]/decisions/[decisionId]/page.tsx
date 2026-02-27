@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
-import { AlertTriangle, Archive, Copy, Download, MessageSquare, Send } from "lucide-react";
+import { AlertTriangle, Archive, Copy, Download, MessageSquare, Plus, Send, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -20,11 +22,10 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { defaultColumnLabels, users } from "@/lib/mock-data";
 import { checkDecisionQuality } from "@/lib/quality-gates";
 import { useApp } from "@/lib/store";
 import type { Decision } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { clamp, cn, parseLocalizedInt } from "@/lib/utils";
 
 type ApprovalStatus = "Approved" | "Pending" | "Rejected";
 
@@ -42,7 +43,7 @@ interface LocalComment {
   createdAt: string;
 }
 
-function userName(id: string) {
+function userName(id: string, users: Array<{ id: string; name: string }>) {
   return users.find((user) => user.id === id)?.name || id;
 }
 
@@ -50,7 +51,7 @@ export default function DecisionDetailPage() {
   const params = useParams();
   const boardId = params.id as string;
   const decisionId = params.decisionId as string;
-  const { getBoard, getDecision, updateDecision } = useApp();
+  const { getBoard, getDecision, updateDecision, users, config } = useApp();
 
   const board = getBoard(boardId);
   const decision = getDecision(decisionId);
@@ -58,17 +59,46 @@ export default function DecisionDetailPage() {
   const [newComment, setNewComment] = useState("");
   const [comments, setComments] = useState<LocalComment[]>([]);
   const [status, setStatus] = useState<Decision["status"]>(decision?.status || "Draft");
+  const [title, setTitle] = useState(decision?.title || "");
+  const [problemStatement, setProblemStatement] = useState(decision?.problemStatement || "");
+  const [category, setCategory] = useState(decision?.category || board?.categories[0] || "");
+  const [impact, setImpact] = useState<Decision["impact"]>(decision?.impact || "Medium");
+  const [urgency, setUrgency] = useState<NonNullable<Decision["urgency"]>>(
+    decision?.urgency || "Medium"
+  );
+  const [confidence, setConfidence] = useState(decision?.confidence ?? 80);
+  const [relatedUncertainty, setRelatedUncertainty] = useState(
+    decision?.relatedUncertainty || ""
+  );
+  const [ownerId, setOwnerId] = useState(decision?.ownerId || "");
+  const [contributorIds, setContributorIds] = useState<string[]>(
+    decision?.contributorIds || []
+  );
+  const [approverIds] = useState<string[]>(decision?.approverIds || []);
   const [chosenOptionId, setChosenOptionId] = useState(decision?.chosenOptionId || "");
   const [finalRationale, setFinalRationale] = useState(decision?.finalRationale || "");
   const [implementationNotes, setImplementationNotes] = useState(decision?.implementationNotes || "");
   const [outcomeReversible, setOutcomeReversible] = useState(decision?.reversible ?? true);
+  const [dueDate, setDueDate] = useState(decision?.dueDate || "");
+  const [reviewMeetingDate, setReviewMeetingDate] = useState(
+    decision?.reviewMeetingDate || ""
+  );
   const [rollbackPlan, setRollbackPlan] = useState(decision?.rollbackExplanation || "");
+  const [editableCriteria, setEditableCriteria] = useState(decision?.criteria || []);
+  const [editableOptions, setEditableOptions] = useState(decision?.options || []);
+  const [riskMitigations, setRiskMitigations] = useState(decision?.keyRisksMitigations || "");
+  const [evidenceLinksText, setEvidenceLinksText] = useState(
+    (decision?.evidenceLinks || []).join("\n")
+  );
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveNotice, setSaveNotice] = useState("");
+  const [lastSavedAt, setLastSavedAt] = useState("");
   const [referenceNow] = useState(() => Date.now());
   const [approvals, setApprovals] = useState<LocalApproval[]>(
     () =>
-      (decision?.approverIds || []).map((approverId) => ({
+      approverIds.map((approverId) => ({
         approverId,
-        approverName: userName(approverId),
+        approverName: userName(approverId, users),
         status: "Pending",
         comment: "",
       }))
@@ -85,19 +115,27 @@ export default function DecisionDetailPage() {
   const quality = checkDecisionQuality(decision, board);
   const failedChecks = quality.checks.filter((check) => !check.passed);
 
+  const evidenceLinks = evidenceLinksText
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
   const irreversibleWithoutEvidence =
-    !decision.reversible &&
-    (!decision.keyRisksMitigations || !decision.evidenceLinks?.length || decision.options.length < 2);
+    !outcomeReversible &&
+    (!riskMitigations.trim() || evidenceLinks.length === 0 || editableOptions.filter((item) => item.title.trim()).length < 2);
   const highImpactWithoutApprovers =
-    decision.impact === "High" && (!decision.approverIds || decision.approverIds.length === 0);
+    impact === "High" && approverIds.length === 0;
   const lowConfidenceWithoutValidation =
     decision.confidence < 60 && !decision.validationPlan?.trim();
-  const dueSoon = decision.dueDate
-    ? new Date(decision.dueDate).getTime() <= referenceNow + 2 * 24 * 60 * 60 * 1000
+  const dueSoon = dueDate
+    ? new Date(dueDate).getTime() <= referenceNow + 2 * 24 * 60 * 60 * 1000
     : false;
 
-  const contributorNames = (decision.contributorIds || []).map(userName);
-  const approverNames = (decision.approverIds || []).map(userName);
+  const contributorNames = contributorIds.map((id) =>
+    userName(id, users)
+  );
+  const approverNames = approverIds.map((id) =>
+    userName(id, users)
+  );
 
   const approvalSummary = {
     required: approvals.length,
@@ -106,10 +144,128 @@ export default function DecisionDetailPage() {
     rejected: approvals.filter((item) => item.status === "Rejected").length,
   };
 
+  const canEditDecision = !["Implementing", "Done"].includes(decision.status);
+
+  const persistDecision = async (updates: Partial<Decision>, successMessage: string) => {
+    setIsSaving(true);
+    try {
+      await updateDecision(decisionId, updates);
+      setLastSavedAt(new Date().toISOString());
+      setSaveNotice(successMessage);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const updateCriterion = (
+    id: string,
+    updates: Partial<Decision["criteria"][number]>
+  ) => {
+    setEditableCriteria((current) =>
+      current.map((item) => (item.id === id ? { ...item, ...updates } : item))
+    );
+  };
+
+  const addCriterion = () => {
+    setEditableCriteria((current) => [
+      ...current,
+      { id: crypto.randomUUID(), name: "", weight: 3 },
+    ]);
+  };
+
+  const removeCriterion = (id: string) => {
+    setEditableCriteria((current) => current.filter((item) => item.id !== id));
+  };
+
+  const updateOption = (
+    id: string,
+    updates: Partial<Decision["options"][number]>
+  ) => {
+    setEditableOptions((current) =>
+      current.map((item) => (item.id === id ? { ...item, ...updates } : item))
+    );
+  };
+
+  const addOption = () => {
+    setEditableOptions((current) => [
+      ...current,
+      { id: crypto.randomUUID(), title: "", pros: "", cons: "", risk: "" },
+    ]);
+  };
+
+  const removeOption = (id: string) => {
+    setEditableOptions((current) => current.filter((item) => item.id !== id));
+  };
+
+  const buildNormalizedCriteriaAndOptions = () => {
+    const criteria = editableCriteria
+      .filter((item) => item.name.trim())
+      .map((item) => ({
+        id: item.id,
+        name: item.name.trim(),
+        weight: clamp(parseLocalizedInt(item.weight, 3), 1, 5),
+        notes: item.notes?.trim() || undefined,
+      }));
+
+    const options = editableOptions
+      .filter((item) => item.title.trim())
+      .map((item) => ({
+        id: item.id,
+        title: item.title.trim(),
+        pros: item.pros.trim(),
+        cons: item.cons.trim(),
+        risk: item.risk?.trim() || undefined,
+      }));
+
+    return { criteria, options };
+  };
+
+  const saveCriteriaAndOptions = () => {
+    const { criteria, options } = buildNormalizedCriteriaAndOptions();
+    void persistDecision({ criteria, options }, "معیارها و گزینه‌ها ذخیره شد.");
+  };
+
+  const toggleContributor = (id: string) => {
+    setContributorIds((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+    );
+  };
+
+  const buildBasicDetailsPayload = (): Partial<Decision> => {
+    const ownerName = ownerId ? userName(ownerId, users) : undefined;
+    return {
+      title: title.trim() || decision.title,
+      problemStatement: problemStatement.trim() || decision.problemStatement,
+      category,
+      impact,
+      urgency,
+      confidence: clamp(parseLocalizedInt(confidence, decision.confidence || 80), 0, 100),
+      relatedUncertainty: relatedUncertainty.trim() || undefined,
+      ownerId: ownerId || undefined,
+      ownerName,
+      contributorIds,
+      approverIds,
+      dueDate: dueDate || undefined,
+      reviewMeetingDate: reviewMeetingDate || undefined,
+    };
+  };
+
+  const saveBasicDetails = () => {
+    void persistDecision(buildBasicDetailsPayload(), "خلاصه و بیان مسئله ذخیره شد.");
+  };
+
+  const focusField = (id: string) => {
+    const target = document.getElementById(id);
+    if (target instanceof HTMLElement) {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      target.focus();
+    }
+  };
+
   const onStatusChange = (value: string) => {
     const next = value as Decision["status"];
     setStatus(next);
-    updateDecision(decisionId, { status: next });
+    void persistDecision({ status: next }, "وضعیت ذخیره شد.");
   };
 
   const postComment = () => {
@@ -126,13 +282,19 @@ export default function DecisionDetailPage() {
   };
 
   const saveOutcome = () => {
-    updateDecision(decisionId, {
+    const normalized = canEditDecision ? buildNormalizedCriteriaAndOptions() : null;
+
+    void persistDecision({
+      ...buildBasicDetailsPayload(),
+      ...(normalized ?? {}),
       chosenOptionId: chosenOptionId || undefined,
       finalRationale: finalRationale || undefined,
       implementationNotes: implementationNotes || undefined,
       reversible: outcomeReversible,
+      keyRisksMitigations: riskMitigations.trim() || undefined,
+      evidenceLinks: evidenceLinks.length ? evidenceLinks : undefined,
       rollbackExplanation: outcomeReversible ? undefined : rollbackPlan || undefined,
-    });
+    }, "همه تغییرات تصمیم ذخیره شد.");
   };
 
   const setApprovalStatus = (approverId: string, approvalStatus: ApprovalStatus) => {
@@ -145,12 +307,29 @@ export default function DecisionDetailPage() {
     );
   };
 
+  const hasPendingCoreChanges =
+    title.trim() !== decision.title ||
+    problemStatement.trim() !== decision.problemStatement ||
+    category !== decision.category ||
+    impact !== decision.impact ||
+    urgency !== (decision.urgency || "Medium") ||
+    clamp(parseLocalizedInt(confidence, decision.confidence), 0, 100) !==
+      decision.confidence ||
+    relatedUncertainty.trim() !== (decision.relatedUncertainty || "") ||
+    ownerId !== (decision.ownerId || "") ||
+    dueDate !== (decision.dueDate || "") ||
+    reviewMeetingDate !== (decision.reviewMeetingDate || "") ||
+    JSON.stringify([...contributorIds].sort()) !==
+      JSON.stringify([...(decision.contributorIds || [])].sort()) ||
+    JSON.stringify([...approverIds].sort()) !==
+      JSON.stringify([...(decision.approverIds || [])].sort());
+
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
       <div className="space-y-6">
         <PageHeader
           title={`تصمیم: ${decision.title}`}
-          subtitle={`${defaultColumnLabels[decision.status] || decision.status} | ${decision.ownerName || "بدون مالک"} | سررسید: ${decision.dueDate || "-"} | کیفیت: ${quality.score}/100`}
+          subtitle={`${config.defaultColumnLabels[decision.status] || decision.status} | ${decision.ownerName || "بدون مالک"} | سررسید: ${decision.dueDate || "-"} | کیفیت: ${quality.score}/100`}
           breadcrumbs={[
             { label: "بوردها", href: "/boards" },
             { label: board.name, href: `/boards/${boardId}` },
@@ -166,7 +345,7 @@ export default function DecisionDetailPage() {
                 <SelectContent>
                   {board.columns.map((column) => (
                     <SelectItem key={column} value={column}>
-                      {defaultColumnLabels[column] || column}
+                      {config.defaultColumnLabels[column] || column}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -195,14 +374,63 @@ export default function DecisionDetailPage() {
           }
         />
 
+        {canEditDecision && (
+          <div className="sticky top-2 z-20 rounded-lg border bg-background/95 p-3 backdrop-blur">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs text-muted-foreground">
+                {isSaving
+                  ? "در حال ذخیره تغییرات..."
+                  : saveNotice ||
+                    (lastSavedAt
+                      ? `آخرین ذخیره: ${new Date(lastSavedAt).toLocaleTimeString("fa-IR")}`
+                      : "تغییری ذخیره نشده است.")}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={saveBasicDetails}
+                  disabled={isSaving || !hasPendingCoreChanges}
+                >
+                  ذخیره خلاصه
+                </Button>
+                <Button size="sm" onClick={saveOutcome} disabled={isSaving}>
+                  ذخیره همه تغییرات
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {irreversibleWithoutEvidence && (
           <Alert variant="destructive">
             <AlertTriangle className="size-4" />
             <AlertTitle>ریسک بالا: تصمیم غیرقابل بازگشت نیاز به شواهد + ریسک‌ها + گزینه‌ها دارد.</AlertTitle>
             <AlertDescription className="mt-2 flex flex-wrap gap-2">
-              <Button size="sm" variant="outline">افزودن شواهد</Button>
-              <Button size="sm" variant="outline">افزودن ریسک‌ها</Button>
-              <Button size="sm" variant="outline">افزودن گزینه‌ها</Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => focusField("evidence-links-field")}
+              >
+                افزودن شواهد
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => focusField("risk-mitigations-field")}
+              >
+                افزودن ریسک‌ها
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  if (!canEditDecision) return;
+                  addOption();
+                }}
+              >
+                افزودن گزینه‌ها
+              </Button>
             </AlertDescription>
           </Alert>
         )}
@@ -221,33 +449,202 @@ export default function DecisionDetailPage() {
           <CardHeader>
             <CardTitle>خلاصه</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline">{decision.category}</Badge>
-              <Badge
-                variant={
-                  decision.impact === "High"
-                    ? "destructive"
-                    : decision.impact === "Medium"
-                      ? "default"
-                      : "secondary"
-                }
-              >
-                {decision.impact === "High" ? "بالا" : decision.impact === "Medium" ? "متوسط" : "کم"}
-              </Badge>
-            </div>
-            <p><span className="text-muted-foreground">مالک:</span> {decision.ownerName || "-"}</p>
-            <p>
-              <span className="text-muted-foreground">مشارکت‌کنندگان:</span>{" "}
-              {contributorNames.length > 0 ? contributorNames.join(", ") : "-"}
-            </p>
-            <p>
-              <span className="text-muted-foreground">تایید‌کنندگان:</span>{" "}
-              {approverNames.length > 0 ? approverNames.join(", ") : "-"}
-            </p>
-            <p><span className="text-muted-foreground">تاریخ سررسید:</span> {decision.dueDate || "-"}</p>
-            <p><span className="text-muted-foreground">تاریخ جلسه بررسی:</span> {decision.reviewMeetingDate || "-"}</p>
-            <p><span className="text-muted-foreground">ایجاد شده:</span> {new Date(decision.createdAt).toLocaleDateString("fa-IR")}</p>
+                    <CardContent className="text-sm">
+            {canEditDecision ? (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>عنوان تصمیم</Label>
+                  <Input
+                    value={title}
+                    placeholder="عنوان تصمیم"
+                    onChange={(event) => setTitle(event.target.value)}
+                  />
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>دسته‌بندی</Label>
+                    <Select value={category} onValueChange={setCategory}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="انتخاب دسته‌بندی" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {board.categories.map((item) => (
+                          <SelectItem key={item} value={item}>
+                            {item}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>تاثیر</Label>
+                    <Select
+                      value={impact}
+                      onValueChange={(value) => setImpact(value as Decision["impact"])}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Low">کم</SelectItem>
+                        <SelectItem value="Medium">متوسط</SelectItem>
+                        <SelectItem value="High">زیاد</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>فوریت</Label>
+                    <Select
+                      value={urgency}
+                      onValueChange={(value) =>
+                        setUrgency(value as NonNullable<Decision["urgency"]>)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Low">کم</SelectItem>
+                        <SelectItem value="Medium">متوسط</SelectItem>
+                        <SelectItem value="High">زیاد</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>اطمینان (۰ تا ۱۰۰)</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={confidence}
+                      onChange={(event) =>
+                        setConfidence(
+                          clamp(parseLocalizedInt(event.target.value, 80), 0, 100)
+                        )
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>مالک</Label>
+                    <Select
+                      value={ownerId || "__none"}
+                      onValueChange={(value) =>
+                        setOwnerId(value === "__none" ? "" : value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="انتخاب مالک" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none">بدون مالک</SelectItem>
+                        {users.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>تاریخ سررسید</Label>
+                    <DatePicker value={dueDate} onValueChange={setDueDate} />
+                  </div>
+
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label>تاریخ جلسه بررسی</Label>
+                    <DatePicker
+                      value={reviewMeetingDate}
+                      onValueChange={setReviewMeetingDate}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>مشارکت‌کنندگان</Label>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {users.map((user) => {
+                      const checked = contributorIds.includes(user.id);
+                      return (
+                        <button
+                          key={user.id}
+                          type="button"
+                          onClick={() => toggleContributor(user.id)}
+                          className={cn(
+                            "rounded-lg border px-3 py-2 text-start transition-colors",
+                            checked
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:bg-muted/50"
+                          )}
+                        >
+                          {user.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>تایید‌کنندگان</Label>
+                  <div className="rounded-lg border bg-muted/20 px-3 py-2 text-sm">
+                    {approverNames.length > 0 ? approverNames.join("، ") : "-"}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>عدم قطعیت مرتبط</Label>
+                  <Textarea
+                    rows={2}
+                    value={relatedUncertainty}
+                    placeholder="ابهام‌های مهم این تصمیم"
+                    onChange={(event) => setRelatedUncertainty(event.target.value)}
+                  />
+                </div>
+
+                <p>
+                  <span className="text-muted-foreground">ایجاد شده:</span>{" "}
+                  {new Date(decision.createdAt).toLocaleDateString("fa-IR")}
+                </p>
+
+                <div className="flex justify-end">
+                  <Button onClick={saveBasicDetails}>ذخیره خلاصه</Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline">{category}</Badge>
+                  <Badge
+                    variant={
+                      impact === "High"
+                        ? "destructive"
+                        : impact === "Medium"
+                          ? "default"
+                          : "secondary"
+                    }
+                  >
+                    {impact === "High" ? "بالا" : impact === "Medium" ? "متوسط" : "کم"}
+                  </Badge>
+                </div>
+                <p><span className="text-muted-foreground">مالک:</span> {ownerId ? userName(ownerId, users) : "-"}</p>
+                <p>
+                  <span className="text-muted-foreground">مشارکت‌کنندگان:</span>{" "}
+                  {contributorNames.length > 0 ? contributorNames.join(", ") : "-"}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">تایید‌کنندگان:</span>{" "}
+                  {approverNames.length > 0 ? approverNames.join(", ") : "-"}
+                </p>
+                <p><span className="text-muted-foreground">تاریخ سررسید:</span> {dueDate || "-"}</p>
+                <p><span className="text-muted-foreground">تاریخ جلسه بررسی:</span> {reviewMeetingDate || "-"}</p>
+                <p><span className="text-muted-foreground">ایجاد شده:</span> {new Date(decision.createdAt).toLocaleDateString("fa-IR")}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -256,7 +653,21 @@ export default function DecisionDetailPage() {
             <CardTitle>بیان مسئله</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="whitespace-pre-wrap text-sm">{decision.problemStatement}</p>
+            {canEditDecision ? (
+              <div className="space-y-3">
+                <Textarea
+                  rows={5}
+                  value={problemStatement}
+                  placeholder="مسئله تصمیم را شرح دهید"
+                  onChange={(event) => setProblemStatement(event.target.value)}
+                />
+                <div className="flex justify-end">
+                  <Button onClick={saveBasicDetails}>ذخیره بیان مسئله</Button>
+                </div>
+              </div>
+            ) : (
+              <p className="whitespace-pre-wrap text-sm">{problemStatement}</p>
+            )}
           </CardContent>
         </Card>
 
@@ -265,8 +676,61 @@ export default function DecisionDetailPage() {
             <CardTitle>معیارها</CardTitle>
           </CardHeader>
           <CardContent>
-            {decision.criteria.length === 0 ? (
-              <p className="text-sm text-muted-foreground">معیاری اضافه نشده است.</p>
+            {canEditDecision ? (
+              <div className="space-y-3">
+                {editableCriteria.map((criterion) => (
+                  <div key={criterion.id} className="space-y-2 rounded-lg border p-3">
+                    <div className="grid gap-2 sm:grid-cols-[1fr_110px_40px]">
+                      <Input
+                        value={criterion.name}
+                        placeholder="نام معیار"
+                        onChange={(event) =>
+                          updateCriterion(criterion.id, { name: event.target.value })
+                        }
+                      />
+                      <Input
+                        type="number"
+                        min={1}
+                        max={5}
+                        value={criterion.weight}
+                        placeholder="وزن (۱ تا ۵)"
+                        onChange={(event) =>
+                          updateCriterion(criterion.id, {
+                            weight: clamp(
+                              parseLocalizedInt(event.target.value, 3),
+                              1,
+                              5
+                            ),
+                          })
+                        }
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeCriterion(criterion.id)}
+                        disabled={editableCriteria.length === 1}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                    <Textarea
+                      rows={2}
+                      placeholder="یادداشت معیار (اختیاری)"
+                      value={criterion.notes || ""}
+                      onChange={(event) =>
+                        updateCriterion(criterion.id, { notes: event.target.value })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      وزن معیار یعنی اهمیت آن در تصمیم: ۱ کمترین، ۵ بیشترین.
+                    </p>
+                  </div>
+                ))}
+                <Button variant="outline" onClick={addCriterion}>
+                  <Plus className="me-2 size-4" />
+                  افزودن معیار
+                </Button>
+              </div>
             ) : (
               <Table>
                 <TableHeader>
@@ -295,17 +759,77 @@ export default function DecisionDetailPage() {
             <CardTitle>گزینه‌ها و ارزیابی</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {decision.options.length === 0 && (
-              <p className="text-sm text-muted-foreground">گزینه‌ای اضافه نشده است.</p>
-            )}
-            {decision.options.map((option) => (
-              <div key={option.id} className="space-y-1 rounded-lg border p-3 text-sm">
-                <p className="font-medium">{option.title}</p>
-                <p><span className="text-muted-foreground">مزایا:</span> {option.pros}</p>
-                <p><span className="text-muted-foreground">معایب:</span> {option.cons}</p>
-                <p><span className="text-muted-foreground">ریسک:</span> {option.risk || "-"}</p>
+            {canEditDecision ? (
+              <div className="space-y-3">
+                {editableOptions.map((option) => (
+                  <div key={option.id} className="space-y-2 rounded-lg border p-3">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={option.title}
+                        placeholder="عنوان گزینه"
+                        onChange={(event) =>
+                          updateOption(option.id, { title: event.target.value })
+                        }
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeOption(option.id)}
+                        disabled={editableOptions.length === 1}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <Textarea
+                        rows={2}
+                        placeholder="مزایا"
+                        value={option.pros}
+                        onChange={(event) =>
+                          updateOption(option.id, { pros: event.target.value })
+                        }
+                      />
+                      <Textarea
+                        rows={2}
+                        placeholder="معایب"
+                        value={option.cons}
+                        onChange={(event) =>
+                          updateOption(option.id, { cons: event.target.value })
+                        }
+                      />
+                    </div>
+                    <Input
+                      value={option.risk || ""}
+                      placeholder="ریسک"
+                      onChange={(event) =>
+                        updateOption(option.id, { risk: event.target.value })
+                      }
+                    />
+                  </div>
+                ))}
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={addOption}>
+                    <Plus className="me-2 size-4" />
+                    افزودن گزینه
+                  </Button>
+                  <Button onClick={saveCriteriaAndOptions}>ذخیره معیارها و گزینه‌ها</Button>
+                </div>
               </div>
-            ))}
+            ) : (
+              <>
+                {decision.options.length === 0 && (
+                  <p className="text-sm text-muted-foreground">گزینه‌ای اضافه نشده است.</p>
+                )}
+                {decision.options.map((option) => (
+                  <div key={option.id} className="space-y-1 rounded-lg border p-3 text-sm">
+                    <p className="font-medium">{option.title}</p>
+                    <p><span className="text-muted-foreground">مزایا:</span> {option.pros}</p>
+                    <p><span className="text-muted-foreground">معایب:</span> {option.cons}</p>
+                    <p><span className="text-muted-foreground">ریسک:</span> {option.risk || "-"}</p>
+                  </div>
+                ))}
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -321,7 +845,7 @@ export default function DecisionDetailPage() {
                   <SelectValue placeholder="انتخاب گزینه" />
                 </SelectTrigger>
                 <SelectContent>
-                  {decision.options.map((option) => (
+                  {(canEditDecision ? editableOptions : decision.options).map((option) => (
                     <SelectItem key={option.id} value={option.id}>
                       {option.title}
                     </SelectItem>
@@ -329,6 +853,22 @@ export default function DecisionDetailPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {canEditDecision && (
+              <div className="space-y-2">
+                <Label>تاریخ سررسید</Label>
+                <DatePicker
+                  value={dueDate}
+                  onValueChange={(value) => {
+                    setDueDate(value);
+                    void persistDecision(
+                      { dueDate: value || undefined },
+                      "تاریخ سررسید ذخیره شد."
+                    );
+                  }}
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>دلیل نهایی *</Label>
@@ -340,10 +880,55 @@ export default function DecisionDetailPage() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label>ریسک‌ها و راهکار کاهش</Label>
+              <Textarea
+                id="risk-mitigations-field"
+                rows={3}
+                value={riskMitigations}
+                onChange={(event) => setRiskMitigations(event.target.value)}
+                placeholder="ریسک‌های اصلی و روش کاهش آن‌ها"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>شواهد (هر خط یک مورد)</Label>
+              <Textarea
+                id="evidence-links-field"
+                rows={3}
+                value={evidenceLinksText}
+                onChange={(event) => setEvidenceLinksText(event.target.value)}
+                placeholder="https://..."
+              />
+            </div>
+
             <div className="flex items-center gap-2">
-              <Switch checked={outcomeReversible} onCheckedChange={setOutcomeReversible} />
+              <Switch
+                checked={outcomeReversible}
+                onCheckedChange={(checked) => {
+                  setOutcomeReversible(checked);
+                  void persistDecision({
+                    reversible: checked,
+                    rollbackExplanation: checked
+                      ? undefined
+                      : rollbackPlan || undefined,
+                  }, "قابلیت بازگشت به‌روزرسانی شد.");
+                }}
+              />
               <Label>قابل بازگشت؟</Label>
             </div>
+
+            {!outcomeReversible && (
+              <div className="space-y-2">
+                <Label>برنامه بازگشت</Label>
+                <Textarea
+                  rows={3}
+                  value={rollbackPlan}
+                  onChange={(event) => setRollbackPlan(event.target.value)}
+                  placeholder="در صورت نیاز به بازگشت چه اقدامی انجام می‌شود؟"
+                />
+              </div>
+            )}
 
             <Button onClick={saveOutcome}>ذخیره خروجی</Button>
           </CardContent>
@@ -449,3 +1034,5 @@ export default function DecisionDetailPage() {
     </div>
   );
 }
+
+

@@ -1,0 +1,27 @@
+[
+  {
+    "id": "t1",
+    "name": "قالب استاندارد",
+    "criteria": [
+      {
+        "name": "هزینه پیاده‌سازی",
+        "weight": 3
+      },
+      {
+        "name": "تاثیر بر کاربر",
+        "weight": 5
+      },
+      {
+        "name": "پیچیدگی فنی",
+        "weight": 4
+      }
+    ],
+    "requiredFields": [
+      "owner",
+      "due",
+      "criteria",
+      "options",
+      "approvers"
+    ]
+  }
+]

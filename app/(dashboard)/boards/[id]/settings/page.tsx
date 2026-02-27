@@ -10,11 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApp } from "@/lib/store";
+import { cn } from "@/lib/utils";
 
 export default function BoardSettingsPage() {
   const params = useParams();
   const boardId = params.id as string;
-  const { getBoard, updateBoard } = useApp();
+  const { getBoard, updateBoard, config } = useApp();
   const board = getBoard(boardId);
 
   const [name, setName] = useState(board?.name || "");
@@ -26,7 +27,7 @@ export default function BoardSettingsPage() {
   if (!board) return null;
 
   const saveGeneral = () => {
-    updateBoard(boardId, { name, project });
+    void updateBoard(boardId, { name, project });
   };
 
   const updateGate = (index: number, label: string) => {
@@ -36,11 +37,16 @@ export default function BoardSettingsPage() {
   };
 
   const addGate = () => {
-    setQualityGates((current) => [...current, { id: crypto.randomUUID(), label: "" }]);
+    setQualityGates((current) => [
+      ...current,
+      { id: crypto.randomUUID(), label: "", enabled: true },
+    ]);
   };
 
   const saveGates = () => {
-    updateBoard(boardId, { qualityGates: qualityGates.filter((g) => g.label.trim()) });
+    void updateBoard(boardId, {
+      qualityGates: qualityGates.filter((g) => g.label.trim()),
+    });
   };
 
   return (
@@ -91,7 +97,7 @@ export default function BoardSettingsPage() {
             <CardContent className="space-y-4">
               {columns.map((col, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <Input value={col} readOnly />
+                  <Input value={config.defaultColumnLabels[col] || col} readOnly />
                   <Button variant="ghost" size="icon" disabled>
                     <Trash2 className="size-4" />
                   </Button>

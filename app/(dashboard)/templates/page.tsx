@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Pencil, Plus, Play, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useApp } from "@/lib/store";
 import type { Template } from "@/lib/types";
 
@@ -22,9 +24,11 @@ const requiredFieldLabels: Record<string, string> = {
 };
 
 export default function TemplatesPage() {
-  const { templates, addTemplate, updateTemplate } = useApp();
+  const router = useRouter();
+  const { templates, boards, addTemplate, updateTemplate } = useApp();
   const initialTemplate = templates[0] ?? null;
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(initialTemplate?.id ?? null);
+  const [targetBoardId, setTargetBoardId] = useState(boards[0]?.id ?? "");
   const [templateName, setTemplateName] = useState(initialTemplate?.name ?? "");
   const [criteria, setCriteria] = useState<Array<{ name: string; weight: number }>>(
     initialTemplate?.criteria.map((criterion) => ({ ...criterion })) ?? []
@@ -51,6 +55,11 @@ export default function TemplatesPage() {
   const openTemplate = (template: Template) => {
     setSelectedTemplateId(template.id);
     loadTemplate(template);
+  };
+
+  const applyTemplateToBoard = (template: Template) => {
+    if (!targetBoardId) return;
+    router.push(`/boards/${targetBoardId}/decisions/new?templateId=${template.id}`);
   };
 
   const createNewTemplate = () => {
@@ -84,7 +93,7 @@ export default function TemplatesPage() {
     );
   };
 
-  const saveTemplate = () => {
+  const saveTemplate = async () => {
     const payload: Template = {
       id: selectedTemplateId || crypto.randomUUID(),
       name: templateName || "قالب بدون عنوان",
@@ -93,9 +102,9 @@ export default function TemplatesPage() {
     };
 
     if (selectedTemplateId) {
-      updateTemplate(selectedTemplateId, payload);
+      await updateTemplate(selectedTemplateId, payload);
     } else {
-      addTemplate(payload);
+      await addTemplate(payload);
       setSelectedTemplateId(payload.id);
     }
   };
@@ -115,6 +124,26 @@ export default function TemplatesPage() {
             <CardDescription>یک قالب را برای ویرایش یا استفاده انتخاب کنید</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
+            <div className="space-y-2 rounded-lg border p-3">
+              <Label>بورد مقصد برای استفاده از قالب</Label>
+              <Select
+                value={targetBoardId || "__none"}
+                onValueChange={(value) => setTargetBoardId(value === "__none" ? "" : value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="انتخاب بورد" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">انتخاب نشده</SelectItem>
+                  {boards.map((board) => (
+                    <SelectItem key={board.id} value={board.id}>
+                      {board.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {templates.map((template) => (
               <div key={template.id} className="flex items-center justify-between rounded-lg border p-3">
                 <div>
@@ -126,7 +155,12 @@ export default function TemplatesPage() {
                     <Pencil className="me-2 size-4" />
                     ویرایش
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => openTemplate(template)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!targetBoardId}
+                    onClick={() => applyTemplateToBoard(template)}
+                  >
                     <Play className="me-2 size-4" />
                     استفاده
                   </Button>

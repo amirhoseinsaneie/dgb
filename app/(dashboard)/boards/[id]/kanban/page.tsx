@@ -16,15 +16,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { defaultColumnLabels, users } from "@/lib/mock-data";
 import { checkDecisionQuality } from "@/lib/quality-gates";
 import { useApp } from "@/lib/store";
+import type { Decision } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export default function KanbanPage() {
   const params = useParams();
   const boardId = params.id as string;
-  const { getBoard, getBoardDecisions, updateDecision } = useApp();
+  const { getBoard, getBoardDecisions, updateDecision, config } = useApp();
 
   const board = getBoard(boardId);
   const decisions = getBoardDecisions(boardId);
@@ -48,7 +48,7 @@ export default function KanbanPage() {
 
   const onDrop = (column: string) => {
     if (!draggedId) return;
-    updateDecision(draggedId, { status: column as any });
+    void updateDecision(draggedId, { status: column as Decision["status"] });
     setDraggedId(null);
   };
 
@@ -97,7 +97,9 @@ export default function KanbanPage() {
               onDrop={() => onDrop(column)}
             >
               <div className="flex items-center justify-between px-1">
-                <h3 className="font-semibold">{defaultColumnLabels[column] || column}</h3>
+                <h3 className="font-semibold">
+                  {config.defaultColumnLabels[column] || column}
+                </h3>
                 <Badge variant="secondary" className="rounded-full">
                   {colDecisions.length}
                 </Badge>

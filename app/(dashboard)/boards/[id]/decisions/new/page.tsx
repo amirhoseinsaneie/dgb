@@ -1,18 +1,33 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, Save } from "lucide-react";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { ChevronLeft, ChevronRight, Plus, Save, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { users } from "@/lib/mock-data";
 import { useApp } from "@/lib/store";
-import type { Decision } from "@/lib/types";
+import type { Decision, Template } from "@/lib/types";
+import { clamp, parseLocalizedInt } from "@/lib/utils";
 
 const steps = [
   { id: "basic", title: "اطلاعات پایه" },
@@ -21,32 +36,206 @@ const steps = [
   { id: "risk", title: "ریسک و اطمینان" },
 ];
 
+const requiredFieldLabels: Record<string, string> = {
+  owner: "مالک",
+  due: "سررسید",
+  criteria: "معیارها",
+  options: "گزینه‌ها",
+  evidence: "شواهد",
+  approvers: "تاییدکنندگان",
+};
+
+const requiredFieldStepMap: Record<string, number> = {
+  owner: 0,
+  due: 0,
+  criteria: 2,
+  options: 2,
+  evidence: 3,
+  approvers: 3,
+};
+
+const normalizeDecisionWeight = (
+  value: string | number | null | undefined
+) => clamp(parseLocalizedInt(value, 3), 1, 5);
+
 export default function NewDecisionPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const boardId = params.id as string;
-  const { getBoard, addDecision } = useApp();
+  const { getBoard, addDecision, users, templates } = useApp();
   const board = getBoard(boardId);
+  const templateIdFromQuery = searchParams.get("templateId") || "";
+  const initialTemplateFromQuery =
+    templates.find((template) => template.id === templateIdFromQuery) || null;
 
   const [currentStep, setCurrentStep] = useState(0);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(
+    initialTemplateFromQuery?.id || ""
+  );
+  const [formError, setFormError] = useState("");
+  const [templateNotice, setTemplateNotice] = useState(
+    initialTemplateFromQuery ? `قالب «${initialTemplateFromQuery.name}» اعمال شد.` : ""
+  );
   const [formData, setFormData] = useState({
     title: "",
     problemStatement: "",
     category: board?.categories[0] || "",
     impact: "Medium" as Decision["impact"],
+    urgency: "Medium" as NonNullable<Decision["urgency"]>,
+    relatedUncertainty: "",
     ownerId: "",
+    approverIds: [] as string[],
     dueDate: "",
     reversible: true,
     confidence: 80,
+    validationPlan: "",
+    keyRisksMitigations: "",
+    evidenceLinksText: "",
   });
 
-  if (!board) return null;
+  const [criteria, setCriteria] = useState<Decision["criteria"]>(() => {
+    if (!initialTemplateFromQuery || initialTemplateFromQuery.criteria.length === 0) {
+      return [{ id: crypto.randomUUID(), name: "", weight: 3, notes: "" }];
+    }
+
+    return initialTemplateFromQuery.criteria.map((criterion) => ({
+      id: crypto.randomUUID(),
+      name: criterion.name,
+      weight: normalizeDecisionWeight(criterion.weight),
+      notes: "",
+    }));
+  });
+
+  const [options, setOptions] = useState<Decision["options"]>([
+    { id: crypto.randomUUID(), title: "", pros: "", cons: "", risk: "متوسط" },
+    { id: crypto.randomUUID(), title: "", pros: "", cons: "", risk: "متوسط" },
+  ]);
+
+  const selectedTemplate = useMemo(
+    () => templates.find((template) => template.id === selectedTemplateId) || null,
+    [selectedTemplateId, templates]
+  );
 
   const updateForm = (updates: Partial<typeof formData>) => {
     setFormData((current) => ({ ...current, ...updates }));
   };
 
-  const onSave = () => {
+  const updateCriterion = (
+    id: string,
+    updates: Partial<Decision["criteria"][number]>
+  ) => {
+    setCriteria((current) =>
+      current.map((item) => (item.id === id ? { ...item, ...updates } : item))
+    );
+  };
+
+  const addCriterion = () => {
+    setCriteria((current) => [
+      ...current,
+      { id: crypto.randomUUID(), name: "", weight: 3, notes: "" },
+    ]);
+  };
+
+  const removeCriterion = (id: string) => {
+    setCriteria((current) => current.filter((item) => item.id !== id));
+  };
+
+  const updateOption = (
+    id: string,
+    updates: Partial<Decision["options"][number]>
+  ) => {
+    setOptions((current) =>
+      current.map((item) => (item.id === id ? { ...item, ...updates } : item))
+    );
+  };
+
+  const addOption = () => {
+    setOptions((current) => [
+      ...current,
+      { id: crypto.randomUUID(), title: "", pros: "", cons: "", risk: "متوسط" },
+    ]);
+  };
+
+  const removeOption = (id: string) => {
+    setOptions((current) => current.filter((item) => item.id !== id));
+  };
+
+  const toggleApprover = (id: string) => {
+    setFormData((current) => ({
+      ...current,
+      approverIds: current.approverIds.includes(id)
+        ? current.approverIds.filter((item) => item !== id)
+        : [...current.approverIds, id],
+    }));
+  };
+
+  const applyTemplate = (template: Template) => {
+    const nextCriteria =
+      template.criteria.length > 0
+        ? template.criteria.map((criterion) => ({
+            id: crypto.randomUUID(),
+            name: criterion.name,
+            weight: normalizeDecisionWeight(criterion.weight),
+            notes: "",
+          }))
+        : [{ id: crypto.randomUUID(), name: "", weight: 3, notes: "" }];
+
+    setCriteria(nextCriteria);
+    setSelectedTemplateId(template.id);
+    setFormError("");
+    setTemplateNotice(`قالب «${template.name}» اعمال شد.`);
+  };
+
+  const onSave = async () => {
+    setFormError("");
+    const normalizedCriteria = criteria
+      .filter((item) => item.name.trim())
+      .map((item) => ({
+        id: item.id,
+        name: item.name.trim(),
+        weight: normalizeDecisionWeight(item.weight),
+        notes: item.notes?.trim() || undefined,
+      }));
+
+    const normalizedOptions = options
+      .filter((item) => item.title.trim())
+      .map((item) => ({
+        id: item.id,
+        title: item.title.trim(),
+        pros: item.pros.trim(),
+        cons: item.cons.trim(),
+        risk: item.risk?.trim() || undefined,
+      }));
+
+    const evidenceLinks = formData.evidenceLinksText
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    if (selectedTemplate) {
+      const missingRequiredFields = selectedTemplate.requiredFields.filter((field) => {
+        if (field === "owner") return !formData.ownerId;
+        if (field === "due") return !formData.dueDate;
+        if (field === "criteria") return normalizedCriteria.length === 0;
+        if (field === "options") return normalizedOptions.length === 0;
+        if (field === "evidence") return evidenceLinks.length === 0;
+        if (field === "approvers") return formData.approverIds.length === 0;
+        return false;
+      });
+
+      if (missingRequiredFields.length > 0) {
+        const firstMissingField = missingRequiredFields[0];
+        setCurrentStep(requiredFieldStepMap[firstMissingField] ?? 0);
+        setFormError(
+          `برای قالب «${selectedTemplate.name}» این موارد اجباری هستند: ${missingRequiredFields
+            .map((field) => requiredFieldLabels[field] || field)
+            .join("، ")}`
+        );
+        return;
+      }
+    }
+
     const newDecision: Decision = {
       id: crypto.randomUUID(),
       boardId,
@@ -55,24 +244,32 @@ export default function NewDecisionPage() {
       status: "Draft",
       category: formData.category,
       impact: formData.impact,
+      urgency: formData.urgency,
+      relatedUncertainty: formData.relatedUncertainty || undefined,
       ownerId: formData.ownerId,
-      ownerName: users.find(u => u.id === formData.ownerId)?.name || "",
+      ownerName: users.find((u) => u.id === formData.ownerId)?.name || "",
       contributorIds: [],
-      approverIds: [],
+      approverIds: formData.approverIds,
       dueDate: formData.dueDate || undefined,
-      criteria: [],
-      options: [],
+      criteria: normalizedCriteria,
+      options: normalizedOptions,
       confidence: formData.confidence,
       reversible: formData.reversible,
+      validationPlan: formData.validationPlan || undefined,
+      keyRisksMitigations: formData.keyRisksMitigations || undefined,
+      evidenceLinks: evidenceLinks.length ? evidenceLinks : undefined,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    addDecision(newDecision);
+
+    await addDecision(newDecision);
     router.push(`/boards/${boardId}/kanban`);
   };
 
   const next = () => setCurrentStep((s) => Math.min(s + 1, steps.length - 1));
   const prev = () => setCurrentStep((s) => Math.max(s - 1, 0));
+
+  if (!board) return null;
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -89,13 +286,25 @@ export default function NewDecisionPage() {
       <div className="flex items-center justify-between">
         {steps.map((step, index) => (
           <div key={step.id} className="flex items-center">
-            <div className={`flex size-8 items-center justify-center rounded-full text-xs font-bold ${index <= currentStep ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+            <div
+              className={`flex size-8 items-center justify-center rounded-full text-xs font-bold ${
+                index <= currentStep
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
               {index + 1}
             </div>
-            <span className={`ms-2 text-xs font-medium hidden sm:inline ${index <= currentStep ? "text-foreground" : "text-muted-foreground"}`}>
+            <span
+              className={`ms-2 hidden text-xs font-medium sm:inline ${
+                index <= currentStep ? "text-foreground" : "text-muted-foreground"
+              }`}
+            >
               {step.title}
             </span>
-            {index < steps.length - 1 && <div className="mx-4 h-px w-8 bg-muted sm:w-16" />}
+            {index < steps.length - 1 && (
+              <div className="mx-4 h-px w-8 bg-muted sm:w-16" />
+            )}
           </div>
         ))}
       </div>
@@ -103,15 +312,70 @@ export default function NewDecisionPage() {
       <Card>
         <CardHeader>
           <CardTitle>{steps[currentStep].title}</CardTitle>
-          <CardDescription>لطفاً فیلدهای زیر را تکمیل کنید</CardDescription>
+          <CardDescription>لطفا فیلدهای زیر را تکمیل کنید</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {formError && (
+            <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {formError}
+            </p>
+          )}
+
           {currentStep === 0 && (
             <div className="space-y-4">
               <div className="space-y-2">
+                <Label>قالب تصمیم (اختیاری)</Label>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Select
+                    value={selectedTemplateId || "__none"}
+                    onValueChange={(value) => {
+                      setSelectedTemplateId(value === "__none" ? "" : value);
+                      setTemplateNotice("");
+                    }}
+                  >
+                    <SelectTrigger className="sm:flex-1">
+                      <SelectValue placeholder="انتخاب قالب" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none">بدون قالب</SelectItem>
+                      {templates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={!selectedTemplate}
+                    onClick={() => {
+                      if (!selectedTemplate) return;
+                      applyTemplate(selectedTemplate);
+                    }}
+                  >
+                    اعمال قالب
+                  </Button>
+                </div>
+                {selectedTemplate && (
+                  <p className="text-xs text-muted-foreground">
+                    {selectedTemplate.criteria.length} معیار پیش‌فرض | الزامی‌ها:{" "}
+                    {selectedTemplate.requiredFields.length > 0
+                      ? selectedTemplate.requiredFields
+                          .map((field) => requiredFieldLabels[field] || field)
+                          .join("، ")
+                      : "ندارد"}
+                  </p>
+                )}
+                {templateNotice && (
+                  <p className="text-xs text-emerald-600">{templateNotice}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
                 <Label>عنوان تصمیم *</Label>
                 <Input
-                  placeholder="مثلاً: انتخاب فریم‌ورک فرانت‌اند"
+                  placeholder="مثلا: انتخاب فریم‌ورک فرانت‌اند"
                   value={formData.title}
                   onChange={(e) => updateForm({ title: e.target.value })}
                 />
@@ -119,20 +383,28 @@ export default function NewDecisionPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>مالک تصمیم</Label>
-                  <Select value={formData.ownerId} onValueChange={(v) => updateForm({ ownerId: v })}>
+                  <Select
+                    value={formData.ownerId}
+                    onValueChange={(v) => updateForm({ ownerId: v })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="انتخاب مالک" />
                     </SelectTrigger>
                     <SelectContent>
                       {users.map((u) => (
-                        <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                        <SelectItem key={u.id} value={u.id}>
+                          {u.name}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>تاریخ سررسید</Label>
-                  <Input type="date" value={formData.dueDate} onChange={(e) => updateForm({ dueDate: e.target.value })} />
+                  <DatePicker
+                    value={formData.dueDate}
+                    onValueChange={(value) => updateForm({ dueDate: value })}
+                  />
                 </div>
               </div>
             </div>
@@ -152,20 +424,30 @@ export default function NewDecisionPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>دسته‌بندی</Label>
-                  <Select value={formData.category} onValueChange={(v) => updateForm({ category: v })}>
+                  <Select
+                    value={formData.category}
+                    onValueChange={(v) => updateForm({ category: v })}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {board.categories.map((c) => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>سطح تاثیر</Label>
-                  <Select value={formData.impact} onValueChange={(v: any) => updateForm({ impact: v })}>
+                  <Select
+                    value={formData.impact}
+                    onValueChange={(v) =>
+                      updateForm({ impact: v as Decision["impact"] })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -180,10 +462,230 @@ export default function NewDecisionPage() {
             </div>
           )}
 
-          {currentStep > 1 && (
-            <div className="flex min-h-32 flex-col items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground">
-              <p>بخش‌های پیشرفته در این نسخه آزمایشی در دسترس نیستند.</p>
-              <p className="text-sm italic">شما می‌توانید پیش‌نویس را هم‌اکنون ذخیره کنید.</p>
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>معیارها</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={addCriterion}>
+                    <Plus className="me-2 size-4" />
+                    افزودن معیار
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {criteria.map((criterion) => (
+                    <div key={criterion.id} className="space-y-2 rounded-lg border p-3">
+                      <div className="grid gap-2 sm:grid-cols-[1fr_110px_40px]">
+                        <Input
+                          placeholder="نام معیار"
+                          value={criterion.name}
+                          onChange={(e) =>
+                            updateCriterion(criterion.id, { name: e.target.value })
+                          }
+                        />
+                        <Input
+                          type="number"
+                          min={1}
+                          max={5}
+                          value={criterion.weight}
+                          placeholder="وزن (۱ تا ۵)"
+                          onChange={(e) =>
+                            updateCriterion(criterion.id, {
+                              weight: normalizeDecisionWeight(e.target.value),
+                            })
+                          }
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeCriterion(criterion.id)}
+                          disabled={criteria.length === 1}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                      <Textarea
+                        rows={2}
+                        placeholder="توضیح معیار (اختیاری)"
+                        value={criterion.notes || ""}
+                        onChange={(e) =>
+                          updateCriterion(criterion.id, { notes: e.target.value })
+                        }
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        وزن معیار یعنی اهمیت آن در تصمیم: ۱ کمترین، ۵ بیشترین.
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>گزینه‌ها</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={addOption}>
+                    <Plus className="me-2 size-4" />
+                    افزودن گزینه
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {options.map((option) => (
+                    <div key={option.id} className="space-y-2 rounded-lg border p-3">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          placeholder="عنوان گزینه"
+                          value={option.title}
+                          onChange={(e) => updateOption(option.id, { title: e.target.value })}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeOption(option.id)}
+                          disabled={options.length === 1}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <Textarea
+                          rows={2}
+                          placeholder="مزایا"
+                          value={option.pros}
+                          onChange={(e) => updateOption(option.id, { pros: e.target.value })}
+                        />
+                        <Textarea
+                          rows={2}
+                          placeholder="معایب"
+                          value={option.cons}
+                          onChange={(e) => updateOption(option.id, { cons: e.target.value })}
+                        />
+                      </div>
+                      <Input
+                        placeholder="ریسک (کم/متوسط/زیاد یا سفارشی)"
+                        value={option.risk || ""}
+                        onChange={(e) => updateOption(option.id, { risk: e.target.value })}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 3 && (
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>فوریت</Label>
+                  <Select
+                    value={formData.urgency}
+                    onValueChange={(v) =>
+                      updateForm({ urgency: v as NonNullable<Decision["urgency"]> })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">کم</SelectItem>
+                      <SelectItem value="Medium">متوسط</SelectItem>
+                      <SelectItem value="High">زیاد</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>اطمینان (0 تا 100)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={formData.confidence}
+                    onChange={(e) =>
+                      updateForm({ confidence: Number(e.target.value || 0) })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>عدم قطعیت مرتبط</Label>
+                <Textarea
+                  rows={2}
+                  placeholder="چه ابهام‌هایی درباره این تصمیم وجود دارد؟"
+                  value={formData.relatedUncertainty}
+                  onChange={(e) => updateForm({ relatedUncertainty: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>ریسک‌ها و راهکار کاهش</Label>
+                <Textarea
+                  rows={3}
+                  placeholder="ریسک‌های کلیدی و راهکار کاهش آن‌ها"
+                  value={formData.keyRisksMitigations}
+                  onChange={(e) =>
+                    updateForm({ keyRisksMitigations: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>برنامه اعتبارسنجی (برای اطمینان پایین مهم است)</Label>
+                <Textarea
+                  rows={3}
+                  placeholder="چطور قبل از اجرا تصمیم را اعتبارسنجی می‌کنید؟"
+                  value={formData.validationPlan}
+                  onChange={(e) => updateForm({ validationPlan: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>لینک شواهد (هر خط یک لینک)</Label>
+                <Textarea
+                  rows={3}
+                  placeholder="https://..."
+                  value={formData.evidenceLinksText}
+                  onChange={(e) => updateForm({ evidenceLinksText: e.target.value })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <p className="text-sm font-medium">تصمیم قابل بازگشت است؟</p>
+                  <p className="text-xs text-muted-foreground">
+                    اگر برگشت‌ناپذیر است این گزینه را خاموش کنید.
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.reversible}
+                  onCheckedChange={(checked) => updateForm({ reversible: checked })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>تاییدکنندگان</Label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {users.map((user) => {
+                    const checked = formData.approverIds.includes(user.id);
+                    return (
+                      <button
+                        type="button"
+                        key={user.id}
+                        onClick={() => toggleApprover(user.id)}
+                        className={`rounded-lg border px-3 py-2 text-start text-sm transition-colors ${
+                          checked
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:bg-muted/50"
+                        }`}
+                      >
+                        {user.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           )}
         </CardContent>

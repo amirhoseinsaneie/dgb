@@ -30,7 +30,14 @@ export default function SearchPage() {
     [decisions]
   );
   const owners = useMemo(
-    () => [...new Set(decisions.map((decision) => decision.ownerName).filter(Boolean))],
+    () =>
+      [
+        ...new Set(
+          decisions
+            .map((decision) => decision.ownerName)
+            .filter((owner): owner is string => Boolean(owner))
+        ),
+      ],
     [decisions]
   );
 

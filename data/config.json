@@ -1,0 +1,66 @@
+{
+  "defaultColumns": [
+    "Draft",
+    "Ready for Review",
+    "Review",
+    "Approved",
+    "Implementing",
+    "Done",
+    "Reversed"
+  ],
+  "defaultColumnLabels": {
+    "Draft": "پیش‌نویس",
+    "Ready for Review": "آماده بررسی",
+    "Review": "در حال بررسی",
+    "Approved": "تایید شده",
+    "Implementing": "در حال پیاده‌سازی",
+    "Done": "انجام شده",
+    "Reversed": "برگشت خورده"
+  },
+  "defaultQualityGates": [
+    {
+      "id": "gate-owner",
+      "label": "دارای مالک",
+      "description": "تصمیم باید مالک داشته باشد.",
+      "enabled": true
+    },
+    {
+      "id": "gate-criteria",
+      "label": "دارای معیار",
+      "description": "تصمیم باید شامل معیارهای وزن‌دار باشد.",
+      "enabled": true
+    },
+    {
+      "id": "gate-due-date",
+      "label": "دارای تاریخ سررسید",
+      "description": "تصمیم باید تاریخ سررسید داشته باشد.",
+      "enabled": true
+    },
+    {
+      "id": "gate-evidence",
+      "label": "شواهد برای تصمیم برگشت‌ناپذیر",
+      "description": "تصمیم‌های برگشت‌ناپذیر نیاز به شواهد و یادداشت ریسک دارند.",
+      "enabled": true
+    },
+    {
+      "id": "gate-approvals",
+      "label": "تاییدکنندگان برای تاثیر بالا",
+      "description": "تصمیم‌های با تاثیر بالا باید تاییدکننده داشته باشند.",
+      "enabled": true
+    }
+  ],
+  "defaultCategories": [
+    "معماری",
+    "امنیت",
+    "محصول",
+    "فرآیند",
+    "تیم"
+  ],
+  "defaultCategoryLabels": {
+    "معماری": "معماری",
+    "امنیت": "امنیت",
+    "محصول": "محصول",
+    "فرآیند": "فرآیند",
+    "تیم": "تیم"
+  }
+}

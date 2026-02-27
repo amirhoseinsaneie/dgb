@@ -1,46 +1,96 @@
 "use client";
 
+import boardsSnapshot from "@/data/boards.json";
+import configSnapshot from "@/data/config.json";
+import decisionsSnapshot from "@/data/decisions.json";
+import templatesSnapshot from "@/data/templates.json";
+import usersSnapshot from "@/data/users.json";
 import {
   createContext,
   useCallback,
+  useEffect,
   useContext,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
-import type { Board, Decision, Template } from "./types";
-import {
-  boards as initialBoards,
-  decisions as initialDecisions,
-  templates as initialTemplates,
-} from "./mock-data";
+import type { AppDatabase, Board, Decision, Template } from "./types";
 
-interface AppState {
-  boards: Board[];
-  decisions: Decision[];
-  templates: Template[];
-}
+type AppState = AppDatabase;
 
 interface AppContextValue extends AppState {
+  isLoading: boolean;
+  refresh: () => Promise<void>;
   getBoard: (id: string) => Board | undefined;
   getBoardDecisions: (boardId: string) => Decision[];
   getDecision: (id: string) => Decision | undefined;
-  addBoard: (board: Board) => void;
-  updateBoard: (id: string, updates: Partial<Board>) => void;
-  addDecision: (decision: Decision) => void;
-  updateDecision: (id: string, updates: Partial<Decision>) => void;
-  addTemplate: (template: Template) => void;
-  updateTemplate: (id: string, updates: Partial<Template>) => void;
+  addBoard: (board: Board) => Promise<void>;
+  updateBoard: (id: string, updates: Partial<Board>) => Promise<void>;
+  addDecision: (decision: Decision) => Promise<void>;
+  updateDecision: (id: string, updates: Partial<Decision>) => Promise<void>;
+  addTemplate: (template: Template) => Promise<void>;
+  updateTemplate: (id: string, updates: Partial<Template>) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-export function AppProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AppState>({
-    boards: initialBoards,
-    decisions: initialDecisions,
-    templates: initialTemplates,
+const seedState: AppState = {
+  boards: boardsSnapshot as AppState["boards"],
+  decisions: decisionsSnapshot as AppState["decisions"],
+  templates: templatesSnapshot as AppState["templates"],
+  users: usersSnapshot as AppState["users"],
+  config: configSnapshot as AppState["config"],
+};
+
+async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  if (init?.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const response = await fetch(url, {
+    ...init,
+    headers,
+    cache: "no-store",
   });
+
+  if (!response.ok) {
+    throw new Error(`Request failed: ${response.status}`);
+  }
+
+  return (await response.json()) as T;
+}
+
+export function AppProvider({ children }: { children: ReactNode }) {
+  const [state, setState] = useState<AppState>(seedState);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    const nextState = await apiRequest<AppState>("/api/db");
+    setState(nextState);
+  }, []);
+
+  const refreshSafely = useCallback(async () => {
+    try {
+      await refresh();
+    } catch (error) {
+      console.error("Failed to refresh datastore from /api/db:", error);
+    }
+  }, [refresh]);
+
+  useEffect(() => {
+    const run = async () => {
+      try {
+        await refresh();
+      } catch (error) {
+        console.error("Failed to load datastore from /api/db:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void run();
+  }, [refresh]);
 
   const getBoard = useCallback(
     (id: string) => state.boards.find((b) => b.id === id),
@@ -58,50 +108,126 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [state.decisions]
   );
 
-  const addBoard = useCallback((board: Board) => {
-    setState((s) => ({ ...s, boards: [...s.boards, board] }));
-  }, []);
+  const addBoard = useCallback(
+    async (board: Board) => {
+      setState((s) => ({ ...s, boards: [...s.boards, board] }));
+      try {
+        await apiRequest<Board>("/api/db/boards", {
+          method: "POST",
+          body: JSON.stringify(board),
+        });
+      } catch (error) {
+        console.error("Failed to persist board:", error);
+        void refreshSafely();
+      }
+    },
+    [refreshSafely]
+  );
 
-  const updateBoard = useCallback((id: string, updates: Partial<Board>) => {
-    setState((s) => ({
-      ...s,
-      boards: s.boards.map((b) =>
-        b.id === id ? { ...b, ...updates, updatedAt: new Date().toISOString() } : b
-      ),
-    }));
-  }, []);
+  const updateBoard = useCallback(
+    async (id: string, updates: Partial<Board>) => {
+      setState((s) => ({
+        ...s,
+        boards: s.boards.map((b) =>
+          b.id === id
+            ? { ...b, ...updates, updatedAt: new Date().toISOString() }
+            : b
+        ),
+      }));
+      try {
+        await apiRequest<Board>(`/api/db/boards/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify(updates),
+        });
+      } catch (error) {
+        console.error("Failed to persist board update:", error);
+        void refreshSafely();
+      }
+    },
+    [refreshSafely]
+  );
 
-  const addDecision = useCallback((decision: Decision) => {
-    setState((s) => ({ ...s, decisions: [...s.decisions, decision] }));
-  }, []);
+  const addDecision = useCallback(
+    async (decision: Decision) => {
+      setState((s) => ({ ...s, decisions: [...s.decisions, decision] }));
+      try {
+        await apiRequest<Decision>("/api/db/decisions", {
+          method: "POST",
+          body: JSON.stringify(decision),
+        });
+      } catch (error) {
+        console.error("Failed to persist decision:", error);
+        void refreshSafely();
+      }
+    },
+    [refreshSafely]
+  );
 
-  const updateDecision = useCallback((id: string, updates: Partial<Decision>) => {
-    setState((s) => ({
-      ...s,
-      decisions: s.decisions.map((d) =>
-        d.id === id
-          ? { ...d, ...updates, updatedAt: new Date().toISOString() }
-          : d
-      ),
-    }));
-  }, []);
+  const updateDecision = useCallback(
+    async (id: string, updates: Partial<Decision>) => {
+      setState((s) => ({
+        ...s,
+        decisions: s.decisions.map((d) =>
+          d.id === id
+            ? { ...d, ...updates, updatedAt: new Date().toISOString() }
+            : d
+        ),
+      }));
+      try {
+        await apiRequest<Decision>(`/api/db/decisions/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify(updates),
+        });
+      } catch (error) {
+        console.error("Failed to persist decision update:", error);
+        void refreshSafely();
+      }
+    },
+    [refreshSafely]
+  );
 
-  const addTemplate = useCallback((template: Template) => {
-    setState((s) => ({ ...s, templates: [...s.templates, template] }));
-  }, []);
+  const addTemplate = useCallback(
+    async (template: Template) => {
+      setState((s) => ({ ...s, templates: [...s.templates, template] }));
+      try {
+        await apiRequest<Template>("/api/db/templates", {
+          method: "POST",
+          body: JSON.stringify(template),
+        });
+      } catch (error) {
+        console.error("Failed to persist template:", error);
+        void refreshSafely();
+      }
+    },
+    [refreshSafely]
+  );
 
-  const updateTemplate = useCallback((id: string, updates: Partial<Template>) => {
-    setState((s) => ({
-      ...s,
-      templates: s.templates.map((t) =>
-        t.id === id ? { ...t, ...updates } : t
-      ),
-    }));
-  }, []);
+  const updateTemplate = useCallback(
+    async (id: string, updates: Partial<Template>) => {
+      setState((s) => ({
+        ...s,
+        templates: s.templates.map((t) =>
+          t.id === id ? { ...t, ...updates } : t
+        ),
+      }));
+      try {
+        await apiRequest<Template>(`/api/db/templates/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify(updates),
+        });
+      } catch (error) {
+        console.error("Failed to persist template update:", error);
+        void refreshSafely();
+      }
+    },
+    [refreshSafely]
+  );
 
   const value = useMemo<AppContextValue>(
     () => ({
       ...state,
+      isLoading,
+      refresh,
       getBoard,
       getBoardDecisions,
       getDecision,
@@ -114,6 +240,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }),
     [
       state,
+      isLoading,
+      refresh,
       getBoard,
       getBoardDecisions,
       getDecision,

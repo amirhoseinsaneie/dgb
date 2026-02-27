@@ -31,7 +31,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { defaultColumnLabels } from "@/lib/mock-data";
 import { checkDecisionQuality } from "@/lib/quality-gates";
 import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -39,7 +38,7 @@ import { cn } from "@/lib/utils";
 export default function DecisionsListPage() {
   const params = useParams();
   const boardId = params.id as string;
-  const { getBoard, getBoardDecisions } = useApp();
+  const { getBoard, getBoardDecisions, config } = useApp();
 
   const board = getBoard(boardId);
   const decisions = getBoardDecisions(boardId);
@@ -175,7 +174,7 @@ export default function DecisionsListPage() {
               <SelectItem value="all">همه وضعیت‌ها</SelectItem>
               {board.columns.map((col) => (
                 <SelectItem key={col} value={col}>
-                  {defaultColumnLabels[col] || col}
+                  {config.defaultColumnLabels[col] || col}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -326,7 +325,9 @@ export default function DecisionsListPage() {
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{defaultColumnLabels[decision.status] || decision.status}</Badge>
+                    <Badge variant="outline">
+                      {config.defaultColumnLabels[decision.status] || decision.status}
+                    </Badge>
                   </TableCell>
                   <TableCell>{decision.ownerName || "-"}</TableCell>
                   <TableCell>

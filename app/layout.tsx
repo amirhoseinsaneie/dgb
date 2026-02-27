@@ -24,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning>
       <body className={`${vazirmatn.className} ${vazirmatn.variable} font-sans antialiased`}>
-        <DirectionProvider direction="rtl">
+        <DirectionProvider dir="rtl" direction="rtl">
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <AppProvider>
               {children}

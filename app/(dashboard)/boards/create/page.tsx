@@ -9,21 +9,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { defaultCategories, defaultColumns, defaultQualityGates } from "@/lib/mock-data";
 import { useApp } from "@/lib/store";
 import type { Board } from "@/lib/types";
 
 export default function CreateBoardPage() {
   const router = useRouter();
-  const { addBoard } = useApp();
+  const { addBoard, config } = useApp();
 
   const [name, setName] = useState("");
   const [project, setProject] = useState("");
-  const [columns, setColumns] = useState<string[]>(defaultColumns);
-  const [qualityGates, setQualityGates] = useState([...defaultQualityGates]);
-  const [categories, setCategories] = useState<string[]>(defaultCategories);
-  const [roles, setRoles] = useState<string[]>(["Owner", "Contributor", "Approver"]);
+  const [columns, setColumns] = useState<string[]>(config.defaultColumns);
+  const [qualityGates, setQualityGates] = useState(
+    config.defaultQualityGates.map((gate) => ({ ...gate }))
+  );
+  const [categories, setCategories] = useState<string[]>(
+    config.defaultCategories
+  );
+  const [roles, setRoles] = useState<string[]>([
+    "مالک",
+    "مشارکت‌کننده",
+    "تاییدکننده",
+  ]);
 
   const toggleColumn = (col: string) => {
     setColumns((current) =>
@@ -38,7 +44,10 @@ export default function CreateBoardPage() {
   };
 
   const addGate = () => {
-    setQualityGates((current) => [...current, { id: crypto.randomUUID(), label: "" }]);
+    setQualityGates((current) => [
+      ...current,
+      { id: crypto.randomUUID(), label: "", enabled: true },
+    ]);
   };
 
   const removeGate = (index: number) => {
@@ -59,7 +68,7 @@ export default function CreateBoardPage() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    addBoard(newBoard);
+    void addBoard(newBoard);
     router.push(`/boards/${newBoard.id}`);
   };
 
@@ -108,14 +117,16 @@ export default function CreateBoardPage() {
             <CardDescription>مراحل فرآیند تصمیم‌گیری خود را انتخاب کنید</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {defaultColumns.map((col) => (
+            {config.defaultColumns.map((col) => (
               <div key={col} className="flex items-center gap-2">
                 <Checkbox
                   id={`col-${col}`}
                   checked={columns.includes(col)}
                   onCheckedChange={() => toggleColumn(col)}
                 />
-                <Label htmlFor={`col-${col}`}>{col}</Label>
+                <Label htmlFor={`col-${col}`}>
+                  {config.defaultColumnLabels[col] || col}
+                </Label>
               </div>
             ))}
           </CardContent>

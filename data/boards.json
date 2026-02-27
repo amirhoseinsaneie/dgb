@@ -1,0 +1,171 @@
+[
+  {
+    "id": "1",
+    "name": "پروژه ایکس",
+    "project": "پلتفرم اصلی",
+    "status": "Active",
+    "columns": [
+      "Draft",
+      "Ready for Review",
+      "Review",
+      "Approved",
+      "Implementing",
+      "Done"
+    ],
+    "qualityGates": [
+      {
+        "id": "gate-owner",
+        "label": "دارای مالک",
+        "enabled": true
+      },
+      {
+        "id": "gate-criteria",
+        "label": "دارای معیار",
+        "enabled": true
+      },
+      {
+        "id": "gate-due-date",
+        "label": "دارای تاریخ سررسید",
+        "enabled": true
+      },
+      {
+        "id": "gate-evidence",
+        "label": "شواهد برای تصمیم برگشت‌ناپذیر",
+        "enabled": true
+      },
+      {
+        "id": "gate-approvals",
+        "label": "تاییدکنندگان برای تاثیر بالا",
+        "enabled": true
+      }
+    ],
+    "categories": [
+      "معماری",
+      "امنیت",
+      "محصول",
+      "فرآیند",
+      "تیم"
+    ],
+    "roles": [
+      "مالک",
+      "مشارکت‌کننده",
+      "تاییدکننده"
+    ],
+    "createdAt": "2024-01-01T00:00:00Z",
+    "updatedAt": "2024-02-20T10:00:00Z"
+  },
+  {
+    "id": "2",
+    "name": "تیم پلتفرم",
+    "status": "Active",
+    "columns": [
+      "Draft",
+      "Ready for Review",
+      "Review",
+      "Approved",
+      "Implementing",
+      "Done"
+    ],
+    "qualityGates": [
+      {
+        "id": "gate-owner",
+        "label": "دارای مالک",
+        "enabled": true
+      },
+      {
+        "id": "gate-criteria",
+        "label": "دارای معیار",
+        "enabled": true
+      },
+      {
+        "id": "gate-due-date",
+        "label": "دارای تاریخ سررسید",
+        "enabled": true
+      },
+      {
+        "id": "gate-evidence",
+        "label": "شواهد برای تصمیم برگشت‌ناپذیر",
+        "enabled": true
+      },
+      {
+        "id": "gate-approvals",
+        "label": "تاییدکنندگان برای تاثیر بالا",
+        "enabled": true
+      }
+    ],
+    "categories": [
+      "معماری",
+      "امنیت",
+      "محصول",
+      "فرآیند",
+      "تیم"
+    ],
+    "roles": [
+      "رهبر",
+      "بازبین"
+    ],
+    "createdAt": "2024-01-15T00:00:00Z",
+    "updatedAt": "2024-02-18T15:30:00Z"
+  },
+  {
+    "id": "ea157b97-179f-464a-874b-d69b4bf9c937",
+    "name": "test",
+    "project": "",
+    "status": "Active",
+    "columns": [
+      "Draft",
+      "Ready for Review",
+      "Review",
+      "Approved",
+      "Implementing",
+      "Done",
+      "Reversed"
+    ],
+    "qualityGates": [
+      {
+        "id": "gate-owner",
+        "label": "دارای مالک",
+        "description": "تصمیم باید مالک داشته باشد.",
+        "enabled": true
+      },
+      {
+        "id": "gate-criteria",
+        "label": "دارای معیار",
+        "description": "تصمیم باید شامل معیارهای وزن‌دار باشد.",
+        "enabled": true
+      },
+      {
+        "id": "gate-due-date",
+        "label": "دارای تاریخ سررسید",
+        "description": "تصمیم باید تاریخ سررسید داشته باشد.",
+        "enabled": true
+      },
+      {
+        "id": "gate-evidence",
+        "label": "شواهد برای تصمیم برگشت‌ناپذیر",
+        "description": "تصمیم‌های برگشت‌ناپذیر نیاز به شواهد و یادداشت ریسک دارند.",
+        "enabled": true
+      },
+      {
+        "id": "gate-approvals",
+        "label": "تاییدکنندگان برای تاثیر بالا",
+        "description": "تصمیم‌های با تاثیر بالا باید تاییدکننده داشته باشند.",
+        "enabled": true
+      }
+    ],
+    "categories": [
+      "معماری",
+      "امنیت",
+      "محصول",
+      "فرآیند",
+      "تیم"
+    ],
+    "roles": [
+      "مالک",
+      "مشارکت‌کننده",
+      "تاییدکننده"
+    ],
+    "createdAt": "2026-02-26T23:09:49.695Z",
+    "updatedAt": "2026-02-26T23:09:49.695Z"
+  }
+]

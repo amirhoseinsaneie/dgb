@@ -21,8 +21,8 @@ export type DecisionStatus =
 export interface QualityGate {
   id: string;
   label: string;
-  description: string;
-  enabled: boolean;
+  description?: string;
+  enabled?: boolean;
 }
 
 export interface Board {
@@ -36,6 +36,7 @@ export interface Board {
   highImpactLevel?: Impact;
   confidenceThreshold?: number;
   columns: string[];
+  roles?: string[];
   createdAt: string;
   updatedAt: string;
   status: "Active" | "Archived";
@@ -120,4 +121,20 @@ export interface Comment {
   content: string;
   createdAt: string;
   parentId?: string;
+}
+
+export interface AppConfig {
+  defaultColumns: string[];
+  defaultColumnLabels: Record<string, string>;
+  defaultQualityGates: QualityGate[];
+  defaultCategories: DecisionCategory[];
+  defaultCategoryLabels: Record<string, string>;
+}
+
+export interface AppDatabase {
+  boards: Board[];
+  decisions: Decision[];
+  templates: Template[];
+  users: User[];
+  config: AppConfig;
 }
