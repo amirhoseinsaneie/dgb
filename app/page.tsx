@@ -46,9 +46,17 @@ export default function LandingPage() {
                 <Sparkles className="size-3" />
                 مدیریت هوشمند تصمیمات
               </Badge>
-              <h1 className="text-3xl font-bold tracking-tight lg:text-4xl animate-fade-in-up">
-                سامانه مدیریت تصمیم
-              </h1>
+              <div className="flex items-center gap-3 animate-fade-in-up">
+                <div className="flex size-11 items-center justify-center rounded-xl bg-linear-to-br from-primary via-primary/90 to-violet-600 shadow-lg shadow-primary/25">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary-foreground">
+                    <path d="M12 2L4 6V12C4 16.4 7.4 20.5 12 22C16.6 20.5 20 16.4 20 12V6L12 2Z" stroke="currentColor" strokeWidth="1.5" fill="currentColor" fillOpacity="0.15" />
+                    <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <h1 className="text-3xl font-bold tracking-tight lg:text-4xl">
+                  تصمیم‌یار
+                </h1>
+              </div>
               <p className="text-muted-foreground text-base lg:text-lg max-w-xl animate-fade-in-up animation-delay-100">
                 ثبت، استانداردسازی و پیگیری تصمیمات کلیدی در تیم‌های چابک
               </p>

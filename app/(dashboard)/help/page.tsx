@@ -96,7 +96,7 @@ export default function HelpPage() {
     <div className="max-w-3xl mx-auto space-y-8">
       <PageHeader
         title="راهنما"
-        subtitle="راهنمای استفاده از سامانه مدیریت تصمیم"
+        subtitle="راهنمای استفاده از تصمیم‌یار"
         breadcrumbs={[{ label: "راهنما", href: "/help" }]}
       />
 

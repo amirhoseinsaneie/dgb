@@ -45,12 +45,19 @@ export function Navbar() {
     <header className="sticky top-0 z-40 border-b glass">
       <div className="flex h-14 items-center gap-4 px-4 lg:px-6">
         <Link href="/" className="group flex shrink-0 items-center gap-2.5">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm transition-transform group-hover:scale-105">
-            <LayoutDashboard className="size-4" />
+          <div className="relative flex size-8 items-center justify-center rounded-xl bg-linear-to-br from-primary via-primary/90 to-violet-600 shadow-md shadow-primary/25 transition-all group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-primary/30">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary-foreground">
+              <path d="M12 2L4 6V12C4 16.4 7.4 20.5 12 22C16.6 20.5 20 16.4 20 12V6L12 2Z" stroke="currentColor" strokeWidth="1.5" fill="currentColor" fillOpacity="0.15" />
+              <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <div className="absolute -bottom-0.5 -inset-e-0.5 size-2.5 rounded-full border-2 border-background bg-emerald-500" />
           </div>
-          <span className="hidden text-base font-bold tracking-tight sm:inline gradient-text">
-            سامانه مدیریت تصمیم
-          </span>
+          <div className="hidden sm:flex flex-col leading-none">
+            <span className="text-sm font-bold tracking-tight gradient-text">
+              تصمیم‌یار
+            </span>
+            <span className="text-[9px] text-muted-foreground">سامانه مدیریت تصمیم</span>
+          </div>
         </Link>
 
         <nav className="hidden items-center gap-0.5 md:flex">

@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/table";
 import { checkDecisionQuality } from "@/lib/quality-gates";
 import { useApp } from "@/lib/store";
-import { cn } from "@/lib/utils";
+import { cn, toJalali } from "@/lib/utils";
 
 const statusColors: Record<string, string> = {
   Draft: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
@@ -467,7 +467,7 @@ export default function DecisionsListPage() {
                     </div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {decision.dueDate || "-"}
+                    {toJalali(decision.dueDate, "-")}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>

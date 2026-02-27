@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useApp } from "@/lib/store";
-import { cn } from "@/lib/utils";
+import { cn, toJalali } from "@/lib/utils";
 
 const statusColors: Record<string, string> = {
   Draft:
@@ -275,7 +275,7 @@ export default function SearchPage() {
                         )}
                         {decision.dueDate && (
                           <span className="text-xs text-muted-foreground">
-                            سررسید: {decision.dueDate}
+                            سررسید: {toJalali(decision.dueDate)}
                           </span>
                         )}
                       </div>

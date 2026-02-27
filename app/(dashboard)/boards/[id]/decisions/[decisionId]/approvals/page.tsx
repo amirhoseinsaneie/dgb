@@ -33,7 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useApp } from "@/lib/store";
-import { cn } from "@/lib/utils";
+import { cn, toJalali } from "@/lib/utils";
 
 type ApprovalStatus = "Approved" | "Pending" | "Rejected";
 
@@ -297,7 +297,7 @@ export default function ApprovalPage() {
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {row.date
-                          ? new Date(row.date).toLocaleDateString("fa-IR")
+                          ? toJalali(row.date)
                           : "-"}
                       </TableCell>
                       <TableCell>

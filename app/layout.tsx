@@ -12,7 +12,7 @@ const vazirmatn = Vazirmatn({
 });
 
 export const metadata: Metadata = {
-  title: "سامانه مدیریت تصمیم",
+  title: "تصمیم‌یار | سامانه مدیریت تصمیم",
   description: "ثبت، استانداردسازی و پیگیری تصمیمات کلیدی در تیم‌های چابک",
 };
 

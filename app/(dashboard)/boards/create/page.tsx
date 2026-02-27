@@ -94,7 +94,7 @@ export default function CreateBoardPage() {
     <div className="max-w-3xl mx-auto space-y-8">
       <PageHeader
         title="ایجاد بورد جدید"
-        subtitle="تنظیم بورد سامانه مدیریت تصمیم برای تیم یا پروژه شما"
+        subtitle="تنظیم بورد تصمیم‌یار برای تیم یا پروژه شما"
         breadcrumbs={[
           { label: "بوردها", href: "/boards" },
           { label: "ایجاد", href: "/boards/create" },

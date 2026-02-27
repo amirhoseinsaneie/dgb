@@ -26,7 +26,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useApp } from "@/lib/store";
-import { cn } from "@/lib/utils";
+import { cn, toJalali } from "@/lib/utils";
 
 export default function BoardDashboardPage() {
   const params = useParams();
@@ -254,7 +254,7 @@ export default function BoardDashboardPage() {
                     {decision.title}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    سررسید: {decision.dueDate}
+                    سررسید: {toJalali(decision.dueDate)}
                   </p>
                 </div>
               </Link>
