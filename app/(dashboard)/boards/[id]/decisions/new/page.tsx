@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, Plus, Save, Trash2 } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, Plus, Save, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +27,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useApp } from "@/lib/store";
 import type { Decision, Template } from "@/lib/types";
-import { clamp, parseLocalizedInt } from "@/lib/utils";
+import { clamp, cn, parseLocalizedInt } from "@/lib/utils";
 
 const steps = [
   { id: "basic", title: "اطلاعات پایه" },
@@ -272,7 +272,7 @@ export default function NewDecisionPage() {
   if (!board) return null;
 
   return (
-    <div className="max-w-3xl space-y-8">
+    <div className="max-w-3xl mx-auto space-y-8">
       <PageHeader
         title="ثبت تصمیم جدید"
         subtitle="مستندسازی فرآیند تصمیم‌گیری بر اساس استانداردهای بورد"
@@ -283,42 +283,71 @@ export default function NewDecisionPage() {
         ]}
       />
 
-      <div className="flex items-center justify-between">
-        {steps.map((step, index) => (
-          <div key={step.id} className="flex items-center">
-            <div
-              className={`flex size-8 items-center justify-center rounded-full text-xs font-bold ${
-                index <= currentStep
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {index + 1}
+      <div className="relative flex items-center justify-between rounded-xl border bg-muted/30 p-4">
+        {steps.map((step, index) => {
+          const isComplete = index < currentStep;
+          const isCurrent = index === currentStep;
+          return (
+            <div key={step.id} className="relative z-10 flex items-center">
+              <button
+                type="button"
+                onClick={() => setCurrentStep(index)}
+                className={cn(
+                  "flex size-9 items-center justify-center rounded-full text-xs font-bold transition-all",
+                  isComplete
+                    ? "bg-emerald-500 text-white shadow-sm"
+                    : isCurrent
+                      ? "bg-primary text-primary-foreground shadow-md ring-4 ring-primary/20"
+                      : "bg-muted text-muted-foreground"
+                )}
+              >
+                {isComplete ? "✓" : index + 1}
+              </button>
+              <span
+                className={cn(
+                  "ms-2 hidden text-xs font-medium sm:inline transition-colors",
+                  isCurrent
+                    ? "text-foreground"
+                    : isComplete
+                      ? "text-emerald-600"
+                      : "text-muted-foreground"
+                )}
+              >
+                {step.title}
+              </span>
+              {index < steps.length - 1 && (
+                <div
+                  className={cn(
+                    "mx-3 h-0.5 w-6 rounded-full transition-colors sm:mx-4 sm:w-12",
+                    index < currentStep ? "bg-emerald-500" : "bg-muted"
+                  )}
+                />
+              )}
             </div>
-            <span
-              className={`ms-2 hidden text-xs font-medium sm:inline ${
-                index <= currentStep ? "text-foreground" : "text-muted-foreground"
-              }`}
-            >
-              {step.title}
-            </span>
-            {index < steps.length - 1 && (
-              <div className="mx-4 h-px w-8 bg-muted sm:w-16" />
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{steps[currentStep].title}</CardTitle>
-          <CardDescription>لطفا فیلدهای زیر را تکمیل کنید</CardDescription>
+      <Card className="overflow-hidden">
+        <CardHeader className="border-b bg-muted/30">
+          <div className="flex items-center gap-3">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10">
+              <span className="text-sm font-bold text-primary">
+                {currentStep + 1}
+              </span>
+            </div>
+            <div>
+              <CardTitle className="text-base">{steps[currentStep].title}</CardTitle>
+              <CardDescription>لطفا فیلدهای زیر را تکمیل کنید</CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           {formError && (
-            <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div className="flex items-start gap-2.5 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              <span className="shrink-0 mt-0.5">⚠</span>
               {formError}
-            </p>
+            </div>
           )}
 
           {currentStep === 0 && (
@@ -464,17 +493,20 @@ export default function NewDecisionPage() {
 
           {currentStep === 2 && (
             <div className="space-y-6">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label>معیارها</Label>
-                  <Button type="button" variant="outline" size="sm" onClick={addCriterion}>
-                    <Plus className="me-2 size-4" />
+                  <Label className="flex items-center gap-2">
+                    معیارها
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground">{criteria.length}</span>
+                  </Label>
+                  <Button type="button" variant="outline" size="sm" onClick={addCriterion} className="gap-2 border-dashed">
+                    <Plus className="size-3.5" />
                     افزودن معیار
                   </Button>
                 </div>
                 <div className="space-y-3">
                   {criteria.map((criterion) => (
-                    <div key={criterion.id} className="space-y-2 rounded-lg border p-3">
+                    <div key={criterion.id} className="group space-y-2 rounded-xl border p-3 transition-all hover:shadow-sm">
                       <div className="grid gap-2 sm:grid-cols-[1fr_110px_40px]">
                         <Input
                           placeholder="نام معیار"
@@ -501,8 +533,9 @@ export default function NewDecisionPage() {
                           size="icon"
                           onClick={() => removeCriterion(criterion.id)}
                           disabled={criteria.length === 1}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <Trash2 className="size-4" />
+                          <Trash2 className="size-4 text-muted-foreground" />
                         </Button>
                       </div>
                       <Textarea
@@ -521,17 +554,22 @@ export default function NewDecisionPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="h-px bg-border" />
+
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label>گزینه‌ها</Label>
-                  <Button type="button" variant="outline" size="sm" onClick={addOption}>
-                    <Plus className="me-2 size-4" />
+                  <Label className="flex items-center gap-2">
+                    گزینه‌ها
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground">{options.length}</span>
+                  </Label>
+                  <Button type="button" variant="outline" size="sm" onClick={addOption} className="gap-2 border-dashed">
+                    <Plus className="size-3.5" />
                     افزودن گزینه
                   </Button>
                 </div>
                 <div className="space-y-3">
                   {options.map((option) => (
-                    <div key={option.id} className="space-y-2 rounded-lg border p-3">
+                    <div key={option.id} className="group space-y-2 rounded-xl border p-3 transition-all hover:shadow-sm">
                       <div className="flex items-center gap-2">
                         <Input
                           placeholder="عنوان گزینه"
@@ -544,8 +582,9 @@ export default function NewDecisionPage() {
                           size="icon"
                           onClick={() => removeOption(option.id)}
                           disabled={options.length === 1}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <Trash2 className="size-4" />
+                          <Trash2 className="size-4 text-muted-foreground" />
                         </Button>
                       </div>
                       <div className="grid gap-2 sm:grid-cols-2">
@@ -651,11 +690,11 @@ export default function NewDecisionPage() {
                 />
               </div>
 
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div>
+              <div className="flex items-center justify-between rounded-xl border p-4 transition-all hover:shadow-sm">
+                <div className="space-y-0.5">
                   <p className="text-sm font-medium">تصمیم قابل بازگشت است؟</p>
                   <p className="text-xs text-muted-foreground">
-                    اگر برگشت‌ناپذیر است این گزینه را خاموش کنید.
+                    اگر برگشت‌ناپذیر است این گزینه را خاموش کنید
                   </p>
                 </div>
                 <Switch
@@ -664,8 +703,15 @@ export default function NewDecisionPage() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>تاییدکنندگان</Label>
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  تاییدکنندگان
+                  {formData.approverIds.length > 0 && (
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-mono text-primary">
+                      {formData.approverIds.length}
+                    </span>
+                  )}
+                </Label>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {users.map((user) => {
                     const checked = formData.approverIds.includes(user.id);
@@ -674,13 +720,21 @@ export default function NewDecisionPage() {
                         type="button"
                         key={user.id}
                         onClick={() => toggleApprover(user.id)}
-                        className={`rounded-lg border px-3 py-2 text-start text-sm transition-colors ${
+                        className={cn(
+                          "flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-start text-sm transition-all",
                           checked
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:bg-muted/50"
-                        }`}
+                            ? "border-primary/30 bg-primary/5 shadow-sm ring-1 ring-primary/10"
+                            : "border-border hover:bg-muted/50 hover:shadow-sm"
+                        )}
                       >
+                        <div className={cn(
+                          "flex size-7 items-center justify-center rounded-full text-[10px] font-bold",
+                          checked ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                        )}>
+                          {user.name.charAt(0)}
+                        </div>
                         {user.name}
+                        {checked && <CheckCircle2 className="ms-auto size-4 text-primary" />}
                       </button>
                     );
                   })}
@@ -689,9 +743,9 @@ export default function NewDecisionPage() {
             </div>
           )}
         </CardContent>
-        <CardFooter className="justify-between">
-          <Button variant="ghost" onClick={prev} disabled={currentStep === 0}>
-            <ChevronRight className="me-2 size-4" />
+        <CardFooter className="justify-between border-t bg-muted/20 px-6 py-4">
+          <Button variant="ghost" onClick={prev} disabled={currentStep === 0} className="gap-2">
+            <ChevronRight className="size-4" />
             قبلی
           </Button>
           <div className="flex gap-2">
@@ -699,10 +753,15 @@ export default function NewDecisionPage() {
               <Save className="size-4" />
               ذخیره پیش‌نویس
             </Button>
-            {currentStep < steps.length - 1 && (
-              <Button onClick={next}>
+            {currentStep < steps.length - 1 ? (
+              <Button onClick={next} className="gap-2 shadow-sm">
                 بعدی
-                <ChevronLeft className="ms-2 size-4" />
+                <ChevronLeft className="size-4" />
+              </Button>
+            ) : (
+              <Button onClick={onSave} className="gap-2 shadow-md bg-emerald-600 hover:bg-emerald-700">
+                <CheckCircle2 className="size-4" />
+                ثبت تصمیم
               </Button>
             )}
           </div>

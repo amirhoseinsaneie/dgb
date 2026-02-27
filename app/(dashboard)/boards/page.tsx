@@ -2,10 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Archive, Copy, ExternalLink, MoreHorizontal, Plus } from "lucide-react";
+import {
+  Archive,
+  Copy,
+  ExternalLink,
+  FolderOpen,
+  MoreHorizontal,
+  Plus,
+} from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { faIR } from "date-fns/locale";
 import { PageHeader } from "@/components/layout/page-header";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,7 +21,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -31,22 +46,28 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useApp } from "@/lib/store";
+import { cn } from "@/lib/utils";
 
 export default function BoardsListPage() {
   const { boards, getBoardDecisions } = useApp();
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"updated" | "name">("updated");
-  const [statusFilter, setStatusFilter] = useState<"all" | "Active" | "Archived">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "Active" | "Archived"
+  >("all");
 
   const filteredBoards = boards
     .filter((board) => {
       if (statusFilter !== "all" && board.status !== statusFilter) return false;
-      if (search && !board.name.toLowerCase().includes(search.toLowerCase())) return false;
+      if (search && !board.name.toLowerCase().includes(search.toLowerCase()))
+        return false;
       return true;
     })
     .sort((a, b) => {
       if (sort === "name") return a.name.localeCompare(b.name);
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      return (
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
     });
 
   return (
@@ -55,7 +76,7 @@ export default function BoardsListPage() {
         title="بوردها"
         breadcrumbs={[{ label: "بوردها", href: "/boards" }]}
         actions={
-          <Button asChild>
+          <Button asChild className="shadow-sm">
             <Link href="/boards/create" className="gap-2">
               <Plus className="size-4" />
               ایجاد بورد
@@ -64,14 +85,17 @@ export default function BoardsListPage() {
         }
       />
 
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap items-center gap-3">
         <Input
           placeholder="جستجو..."
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           className="max-w-xs"
         />
-        <Select value={sort} onValueChange={(value) => setSort(value as "updated" | "name")}>
+        <Select
+          value={sort}
+          onValueChange={(value) => setSort(value as "updated" | "name")}
+        >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="مرتب‌سازی" />
           </SelectTrigger>
@@ -80,7 +104,12 @@ export default function BoardsListPage() {
             <SelectItem value="name">نام</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as "all" | "Active" | "Archived")}>
+        <Select
+          value={statusFilter}
+          onValueChange={(value) =>
+            setStatusFilter(value as "all" | "Active" | "Archived")
+          }
+        >
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="وضعیت" />
           </SelectTrigger>
@@ -97,7 +126,9 @@ export default function BoardsListPage() {
           <EmptyHeader>
             <EmptyMedia variant="icon" />
             <EmptyTitle>هنوز بوردی ایجاد نشده است</EmptyTitle>
-            <EmptyDescription>برای شروع یک بورد ایجاد کنید.</EmptyDescription>
+            <EmptyDescription>
+              برای شروع یک بورد ایجاد کنید.
+            </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button asChild>
@@ -106,10 +137,10 @@ export default function BoardsListPage() {
           </EmptyContent>
         </Empty>
       ) : (
-        <div className="rounded-lg border">
+        <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="hover:bg-transparent">
                 <TableHead>نام بورد</TableHead>
                 <TableHead>پروژه</TableHead>
                 <TableHead>تصمیمات باز</TableHead>
@@ -122,7 +153,8 @@ export default function BoardsListPage() {
               {filteredBoards.map((board) => {
                 const boardDecisions = getBoardDecisions(board.id);
                 const openCount = boardDecisions.filter(
-                  (decision) => !["Done", "Reversed"].includes(decision.status)
+                  (decision) =>
+                    !["Done", "Reversed"].includes(decision.status)
                 ).length;
                 const overdueCount = boardDecisions.filter((decision) => {
                   if (!decision.dueDate) return false;
@@ -133,28 +165,61 @@ export default function BoardsListPage() {
                 }).length;
 
                 return (
-                  <TableRow key={board.id}>
+                  <TableRow key={board.id} className="group">
                     <TableCell>
-                      <Link href={`/boards/${board.id}`} className="font-medium hover:underline">
-                        {board.name}
+                      <Link
+                        href={`/boards/${board.id}`}
+                        className="flex items-center gap-3"
+                      >
+                        <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+                          <FolderOpen className="size-3.5" />
+                        </div>
+                        <span className="font-medium group-hover:text-primary transition-colors">
+                          {board.name}
+                        </span>
                       </Link>
                     </TableCell>
-                    <TableCell>{board.project || "-"}</TableCell>
-                    <TableCell>{openCount}</TableCell>
-                    <TableCell>{overdueCount}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {board.project || "-"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="font-mono">
+                        {openCount}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          overdueCount > 0 ? "destructive" : "secondary"
+                        }
+                        className="font-mono"
+                      >
+                        {overdueCount}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {formatDistanceToNow(new Date(board.updatedAt), { addSuffix: true, locale: faIR })}
+                      {formatDistanceToNow(new Date(board.updatedAt), {
+                        addSuffix: true,
+                        locale: faIR,
+                      })}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="size-8">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
                             <MoreHorizontal className="size-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
-                            <Link href={`/boards/${board.id}`} className="flex items-center gap-2">
+                            <Link
+                              href={`/boards/${board.id}`}
+                              className="flex items-center gap-2"
+                            >
                               <ExternalLink className="size-4" />
                               باز کردن
                             </Link>
@@ -163,7 +228,10 @@ export default function BoardsListPage() {
                             <Copy className="size-4" />
                             تکثیر
                           </DropdownMenuItem>
-                          <DropdownMenuItem variant="destructive" className="gap-2">
+                          <DropdownMenuItem
+                            variant="destructive"
+                            className="gap-2"
+                          >
                             <Archive className="size-4" />
                             بایگانی
                           </DropdownMenuItem>

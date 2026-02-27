@@ -2,12 +2,31 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { BarChart3, LayoutGrid, List, Plus, Settings } from "lucide-react";
+import {
+  AlertTriangle,
+  BarChart3,
+  Calendar,
+  Clock,
+  LayoutGrid,
+  List,
+  Plus,
+  Settings,
+  Shield,
+  Users,
+  Zap,
+} from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useApp } from "@/lib/store";
+import { cn } from "@/lib/utils";
 
 export default function BoardDashboardPage() {
   const params = useParams();
@@ -18,39 +37,100 @@ export default function BoardDashboardPage() {
 
   if (!board) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <p className="text-muted-foreground">بورد یافت نشد</p>
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-3">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-muted">
+          <AlertTriangle className="size-6 text-muted-foreground" />
+        </div>
+        <p className="text-muted-foreground font-medium">بورد یافت نشد</p>
       </div>
     );
   }
 
-  const openCount = boardDecisions.filter((decision) => !["Done", "Reversed"].includes(decision.status)).length;
-  const overdueCount = boardDecisions.filter((decision) => {
-    if (!decision.dueDate) return false;
-    return new Date(decision.dueDate) < new Date() && !["Done", "Reversed"].includes(decision.status);
+  const openCount = boardDecisions.filter(
+    (d) => !["Done", "Reversed"].includes(d.status)
+  ).length;
+  const overdueCount = boardDecisions.filter((d) => {
+    if (!d.dueDate) return false;
+    return (
+      new Date(d.dueDate) < new Date() &&
+      !["Done", "Reversed"].includes(d.status)
+    );
   }).length;
-  const missingOwnerCount = boardDecisions.filter((decision) => !decision.ownerId && !["Done", "Reversed"].includes(decision.status)).length;
-  const missingCriteriaCount = boardDecisions.filter((decision) => decision.criteria.length === 0 && !["Done", "Reversed"].includes(decision.status)).length;
-  const irreversiblePending = boardDecisions.filter((decision) => {
-    if (decision.reversible || ["Done", "Reversed"].includes(decision.status)) return false;
-    return !decision.keyRisksMitigations || !decision.evidenceLinks?.length;
+  const missingOwnerCount = boardDecisions.filter(
+    (d) => !d.ownerId && !["Done", "Reversed"].includes(d.status)
+  ).length;
+  const missingCriteriaCount = boardDecisions.filter(
+    (d) => d.criteria.length === 0 && !["Done", "Reversed"].includes(d.status)
+  ).length;
+  const irreversiblePending = boardDecisions.filter((d) => {
+    if (d.reversible || ["Done", "Reversed"].includes(d.status)) return false;
+    return !d.keyRisksMitigations || !d.evidenceLinks?.length;
   }).length;
 
-  const priorityAlerts = boardDecisions.filter((decision) => {
-    if (["Done", "Reversed"].includes(decision.status)) return false;
-    if (!decision.ownerId || decision.criteria.length === 0 || !decision.dueDate) return true;
-    return new Date(decision.dueDate) < new Date();
-  }).slice(0, 5);
-
-  const upcomingDeadlines = boardDecisions
-    .filter((decision) => decision.dueDate && !["Done", "Reversed"].includes(decision.status))
-    .sort((a, b) => new Date(a.dueDate as string).getTime() - new Date(b.dueDate as string).getTime())
+  const priorityAlerts = boardDecisions
+    .filter((d) => {
+      if (["Done", "Reversed"].includes(d.status)) return false;
+      if (!d.ownerId || d.criteria.length === 0 || !d.dueDate) return true;
+      return new Date(d.dueDate) < new Date();
+    })
     .slice(0, 5);
 
+  const upcomingDeadlines = boardDecisions
+    .filter(
+      (d) => d.dueDate && !["Done", "Reversed"].includes(d.status)
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.dueDate as string).getTime() -
+        new Date(b.dueDate as string).getTime()
+    )
+    .slice(0, 5);
+
+  const stats = [
+    {
+      label: "تصمیمات باز",
+      value: openCount,
+      icon: Zap,
+      color: "text-primary",
+      bg: "bg-primary/10",
+    },
+    {
+      label: "عقب‌افتاده",
+      value: overdueCount,
+      icon: Clock,
+      color: overdueCount > 0 ? "text-destructive" : "text-muted-foreground",
+      bg: overdueCount > 0 ? "bg-destructive/10" : "bg-muted",
+    },
+    {
+      label: "بدون مالک",
+      value: missingOwnerCount,
+      icon: Users,
+      color:
+        missingOwnerCount > 0 ? "text-amber-600" : "text-muted-foreground",
+      bg: missingOwnerCount > 0 ? "bg-amber-500/10" : "bg-muted",
+    },
+    {
+      label: "بدون معیار",
+      value: missingCriteriaCount,
+      icon: Shield,
+      color:
+        missingCriteriaCount > 0 ? "text-amber-600" : "text-muted-foreground",
+      bg: missingCriteriaCount > 0 ? "bg-amber-500/10" : "bg-muted",
+    },
+    {
+      label: "غیرقابل بازگشت معلق",
+      value: irreversiblePending,
+      icon: AlertTriangle,
+      color:
+        irreversiblePending > 0 ? "text-destructive" : "text-muted-foreground",
+      bg: irreversiblePending > 0 ? "bg-destructive/10" : "bg-muted",
+    },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
-        title={`بورد: ${board.name}`}
+        title={board.name}
         subtitle="سلامت تصمیمات، تصمیمات باز و سررسیدهای آینده"
         breadcrumbs={[
           { label: "بوردها", href: "/boards" },
@@ -58,120 +138,177 @@ export default function BoardDashboardPage() {
         ]}
       />
 
-      <div className="flex flex-wrap gap-4 rounded-lg bg-muted/50 p-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">باز:</span>
-          <Badge variant="secondary">{openCount}</Badge>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">عقب‌افتاده:</span>
-          <Badge variant={overdueCount > 0 ? "destructive" : "secondary"}>{overdueCount}</Badge>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">بدون مالک:</span>
-          <Badge variant="secondary">{missingOwnerCount}</Badge>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">بدون معیار:</span>
-          <Badge variant="secondary">{missingCriteriaCount}</Badge>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">غیرقابل بازگشت معلق:</span>
-          <Badge variant="secondary">{irreversiblePending}</Badge>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">میانگین زمان تایید:</span>
-          <span className="font-medium">۴.۲ روز</span>
-        </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {stats.map((stat) => (
+          <Card
+            key={stat.label}
+            className="relative overflow-hidden transition-all hover:shadow-sm"
+          >
+            <CardContent className="pt-5 pb-4">
+              <div className="flex items-center gap-3">
+                <div
+                  className={cn(
+                    "flex size-9 items-center justify-center rounded-lg",
+                    stat.bg
+                  )}
+                >
+                  <stat.icon className={cn("size-4", stat.color)} />
+                </div>
+                <div>
+                  <p className="text-xl font-bold">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle>هشدارهای اولویت‌دار</CardTitle>
-            <CardDescription>موارد نیازمند اقدام</CardDescription>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-destructive/10">
+                <AlertTriangle className="size-4 text-destructive" />
+              </div>
+              <div>
+                <CardTitle className="text-base">هشدارهای اولویت‌دار</CardTitle>
+                <CardDescription>موارد نیازمند اقدام فوری</CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-2">
             {priorityAlerts.length === 0 && (
-              <p className="text-sm text-muted-foreground">بدون هشدار</p>
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 mb-2">
+                  <Shield className="size-5 text-emerald-600" />
+                </div>
+                <p className="text-sm text-muted-foreground">بدون هشدار</p>
+              </div>
             )}
             {priorityAlerts.map((decision) => (
-              <div key={decision.id} className="flex items-center justify-between rounded-lg border p-3">
-                <div>
-                  <p className="text-sm font-medium">{decision.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {!decision.ownerId && "بدون مالک "}
-                    {decision.criteria.length === 0 && "بدون معیار "}
-                    {decision.dueDate && new Date(decision.dueDate) < new Date() && "عقب‌افتاده"}
+              <Link
+                key={decision.id}
+                href={`/boards/${boardId}/decisions/${decision.id}`}
+                className="group flex items-center justify-between rounded-xl border p-3 transition-all hover:bg-muted/50 hover:shadow-sm"
+              >
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium group-hover:text-primary transition-colors">
+                    {decision.title}
                   </p>
+                  <div className="flex flex-wrap gap-1">
+                    {!decision.ownerId && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-amber-600 border-amber-300">
+                        بدون مالک
+                      </Badge>
+                    )}
+                    {decision.criteria.length === 0 && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-amber-600 border-amber-300">
+                        بدون معیار
+                      </Badge>
+                    )}
+                    {decision.dueDate &&
+                      new Date(decision.dueDate) < new Date() && (
+                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                          عقب‌افتاده
+                        </Badge>
+                      )}
+                  </div>
                 </div>
-                <Button asChild size="sm" variant="outline">
-                  <Link href={`/boards/${boardId}/decisions/${decision.id}`}>رفتن به تصمیم</Link>
-                </Button>
-              </div>
+              </Link>
             ))}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>سررسیدهای آینده</CardTitle>
-            <CardDescription>تصمیمات نزدیک به سررسید</CardDescription>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
+                <Calendar className="size-4 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-base">سررسیدهای آینده</CardTitle>
+                <CardDescription>تصمیمات نزدیک به سررسید</CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-2">
             {upcomingDeadlines.length === 0 && (
-              <p className="text-sm text-muted-foreground">سررسید آینده‌ای وجود ندارد</p>
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div className="flex size-10 items-center justify-center rounded-xl bg-muted mb-2">
+                  <Calendar className="size-5 text-muted-foreground" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  سررسید آینده‌ای وجود ندارد
+                </p>
+              </div>
             )}
             {upcomingDeadlines.map((decision) => (
-              <div key={decision.id} className="flex items-center justify-between rounded-lg border p-3">
-                <div>
-                  <p className="text-sm font-medium">{decision.title}</p>
-                  <p className="text-xs text-muted-foreground">سررسید: {decision.dueDate}</p>
+              <Link
+                key={decision.id}
+                href={`/boards/${boardId}/decisions/${decision.id}`}
+                className="group flex items-center justify-between rounded-xl border p-3 transition-all hover:bg-muted/50 hover:shadow-sm"
+              >
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium group-hover:text-primary transition-colors">
+                    {decision.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    سررسید: {decision.dueDate}
+                  </p>
                 </div>
-                <Button asChild size="sm" variant="outline">
-                  <Link href={`/boards/${boardId}/kanban`}>رفتن به بورد</Link>
-                </Button>
-              </div>
+              </Link>
             ))}
           </CardContent>
         </Card>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>اقدامات سریع</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">اقدامات سریع</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-4">
-          <Button asChild>
-            <Link href={`/boards/${boardId}/decisions/new`} className="gap-2">
-              <Plus className="size-4" />
-              تصمیم جدید
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href={`/boards/${boardId}/kanban`} className="gap-2">
-              <LayoutGrid className="size-4" />
-              باز کردن بورد کانبان
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href={`/boards/${boardId}/decisions`} className="gap-2">
-              <List className="size-4" />
-              لیست تصمیمات
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/reports" className="gap-2">
-              <BarChart3 className="size-4" />
-              گزارش‌ها
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href={`/boards/${boardId}/settings`} className="gap-2">
-              <Settings className="size-4" />
-              تنظیمات
-            </Link>
-          </Button>
+        <CardContent>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {[
+              {
+                href: `/boards/${boardId}/decisions/new`,
+                label: "تصمیم جدید",
+                icon: Plus,
+                primary: true,
+              },
+              {
+                href: `/boards/${boardId}/kanban`,
+                label: "بورد کانبان",
+                icon: LayoutGrid,
+              },
+              {
+                href: `/boards/${boardId}/decisions`,
+                label: "لیست تصمیمات",
+                icon: List,
+              },
+              { href: "/reports", label: "گزارش‌ها", icon: BarChart3 },
+              {
+                href: `/boards/${boardId}/settings`,
+                label: "تنظیمات",
+                icon: Settings,
+              },
+            ].map((action) => (
+              <Button
+                key={action.href}
+                asChild
+                variant={action.primary ? "default" : "outline"}
+                className={cn(
+                  "h-auto flex-col gap-2 py-4 transition-all hover:shadow-sm",
+                  action.primary && "shadow-md"
+                )}
+              >
+                <Link href={action.href}>
+                  <action.icon className="size-5" />
+                  <span className="text-xs font-medium">{action.label}</span>
+                </Link>
+              </Button>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

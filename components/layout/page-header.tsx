@@ -31,7 +31,7 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 md:flex-row md:items-center md:justify-between",
+        "flex flex-col gap-4 pb-2 md:flex-row md:items-center md:justify-between",
         className
       )}
     >
@@ -54,7 +54,7 @@ export function PageHeader({
                     </BreadcrumbItem>
                     {!isLast && (
                       <BreadcrumbSeparator>
-                        <ChevronLeft className="size-4" />
+                        <ChevronLeft className="size-3.5" />
                       </BreadcrumbSeparator>
                     )}
                   </div>
@@ -63,9 +63,13 @@ export function PageHeader({
             </BreadcrumbList>
           </Breadcrumb>
         )}
-        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+        <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">
+          {title}
+        </h1>
         {subtitle && (
-          <p className="text-muted-foreground text-lg">{subtitle}</p>
+          <p className="text-muted-foreground text-sm lg:text-base max-w-2xl">
+            {subtitle}
+          </p>
         )}
       </div>
       {actions && (

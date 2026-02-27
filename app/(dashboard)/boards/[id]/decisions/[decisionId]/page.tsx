@@ -106,8 +106,11 @@ export default function DecisionDetailPage() {
 
   if (!board || !decision) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <p className="text-muted-foreground">تصمیم یافت نشد</p>
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-3">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-muted">
+          <AlertTriangle className="size-6 text-muted-foreground" />
+        </div>
+        <p className="text-muted-foreground font-medium">تصمیم یافت نشد</p>
       </div>
     );
   }
@@ -375,15 +378,30 @@ export default function DecisionDetailPage() {
         />
 
         {canEditDecision && (
-          <div className="sticky top-2 z-20 rounded-lg border bg-background/95 p-3 backdrop-blur">
+          <div className="sticky top-16 z-20 rounded-xl border bg-background/95 p-3.5 backdrop-blur-xl shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="text-xs text-muted-foreground">
-                {isSaving
-                  ? "در حال ذخیره تغییرات..."
-                  : saveNotice ||
-                    (lastSavedAt
-                      ? `آخرین ذخیره: ${new Date(lastSavedAt).toLocaleTimeString("fa-IR")}`
-                      : "تغییری ذخیره نشده است.")}
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                {isSaving ? (
+                  <>
+                    <div className="size-2 animate-pulse rounded-full bg-amber-500" />
+                    در حال ذخیره تغییرات...
+                  </>
+                ) : saveNotice ? (
+                  <>
+                    <div className="size-2 rounded-full bg-emerald-500" />
+                    {saveNotice}
+                  </>
+                ) : lastSavedAt ? (
+                  <>
+                    <div className="size-2 rounded-full bg-emerald-500" />
+                    آخرین ذخیره: {new Date(lastSavedAt).toLocaleTimeString("fa-IR")}
+                  </>
+                ) : (
+                  <>
+                    <div className="size-2 rounded-full bg-muted-foreground/30" />
+                    تغییری ذخیره نشده است
+                  </>
+                )}
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -394,7 +412,7 @@ export default function DecisionDetailPage() {
                 >
                   ذخیره خلاصه
                 </Button>
-                <Button size="sm" onClick={saveOutcome} disabled={isSaving}>
+                <Button size="sm" onClick={saveOutcome} disabled={isSaving} className="shadow-sm">
                   ذخیره همه تغییرات
                 </Button>
               </div>
@@ -445,11 +463,11 @@ export default function DecisionDetailPage() {
           </Alert>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>خلاصه</CardTitle>
+        <Card className="overflow-hidden">
+          <CardHeader className="border-b bg-muted/30">
+            <CardTitle className="text-base">خلاصه</CardTitle>
           </CardHeader>
-                    <CardContent className="text-sm">
+          <CardContent className="text-sm pt-6">
             {canEditDecision ? (
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -648,9 +666,9 @@ export default function DecisionDetailPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>بیان مسئله</CardTitle>
+        <Card className="overflow-hidden">
+          <CardHeader className="border-b bg-muted/30">
+            <CardTitle className="text-base">بیان مسئله</CardTitle>
           </CardHeader>
           <CardContent>
             {canEditDecision ? (
@@ -671,9 +689,9 @@ export default function DecisionDetailPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>معیارها</CardTitle>
+        <Card className="overflow-hidden">
+          <CardHeader className="border-b bg-muted/30">
+            <CardTitle className="text-base">معیارها</CardTitle>
           </CardHeader>
           <CardContent>
             {canEditDecision ? (
@@ -754,9 +772,9 @@ export default function DecisionDetailPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>گزینه‌ها و ارزیابی</CardTitle>
+        <Card className="overflow-hidden">
+          <CardHeader className="border-b bg-muted/30">
+            <CardTitle className="text-base">گزینه‌ها و ارزیابی</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {canEditDecision ? (
@@ -833,9 +851,9 @@ export default function DecisionDetailPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>خروجی تصمیم</CardTitle>
+        <Card className="overflow-hidden">
+          <CardHeader className="border-b bg-muted/30">
+            <CardTitle className="text-base">خروجی تصمیم</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -935,31 +953,45 @@ export default function DecisionDetailPage() {
         </Card>
 
         <Tabs defaultValue="comments">
-          <TabsList className="w-full justify-start">
-            <TabsTrigger value="comments">نظرات و گفتگو</TabsTrigger>
-            <TabsTrigger value="approvals">تاییدها</TabsTrigger>
-            <TabsTrigger value="audit">سوابق تغییرات</TabsTrigger>
+          <TabsList className="w-full justify-start rounded-xl bg-muted/50 p-1">
+            <TabsTrigger value="comments" className="data-[state=active]:shadow-sm">
+              <MessageSquare className="me-1.5 size-3.5" />
+              نظرات و گفتگو
+            </TabsTrigger>
+            <TabsTrigger value="approvals" className="data-[state=active]:shadow-sm">
+              تاییدها
+              {approvalSummary.pending > 0 && (
+                <Badge variant="secondary" className="ms-1.5 size-5 justify-center rounded-full p-0 text-[10px]">
+                  {approvalSummary.pending}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="audit" className="data-[state=active]:shadow-sm">سوابق تغییرات</TabsTrigger>
           </TabsList>
 
           <TabsContent value="comments" className="mt-4">
-            <Card>
+            <Card className="overflow-hidden">
               <CardContent className="space-y-3 pt-6">
                 <div className="flex items-start gap-2">
                   <Textarea
                     rows={2}
                     value={newComment}
                     onChange={(event) => setNewComment(event.target.value)}
-                    placeholder="افزودن نظر"
+                    placeholder="افزودن نظر..."
+                    className="transition-shadow focus:shadow-sm"
                   />
-                  <Button onClick={postComment}>ارسال</Button>
+                  <Button onClick={postComment} className="shadow-sm">ارسال</Button>
                 </div>
                 {comments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">نظری ثبت نشده است.</p>
+                  <div className="flex flex-col items-center gap-2 py-8 text-center">
+                    <MessageSquare className="size-8 text-muted-foreground/30" />
+                    <p className="text-sm text-muted-foreground">نظری ثبت نشده است</p>
+                  </div>
                 ) : (
                   comments.map((comment) => (
-                    <div key={comment.id} className="rounded-lg border p-3 text-sm">
+                    <div key={comment.id} className="rounded-xl border p-3 text-sm transition-all hover:shadow-sm">
                       <p>{comment.content}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="mt-1.5 text-xs text-muted-foreground">
                         {new Date(comment.createdAt).toLocaleString("fa-IR")}
                       </p>
                     </div>
@@ -970,30 +1002,55 @@ export default function DecisionDetailPage() {
           </TabsContent>
 
           <TabsContent value="approvals" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>خلاصه تاییدها</CardTitle>
+            <Card className="overflow-hidden">
+              <CardHeader className="border-b bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">خلاصه تاییدها</CardTitle>
+                  <div className="flex gap-3 text-xs text-muted-foreground">
+                    <span>تایید: <strong className="text-emerald-600">{approvalSummary.approved}</strong></span>
+                    <span>در انتظار: <strong className="text-amber-600">{approvalSummary.pending}</strong></span>
+                    <span>رد: <strong className="text-destructive">{approvalSummary.rejected}</strong></span>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="pt-0">
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className="hover:bg-transparent">
                       <TableHead>نام</TableHead>
                       <TableHead>وضعیت</TableHead>
                       <TableHead>تاریخ</TableHead>
-                      <TableHead>عملیات</TableHead>
+                      <TableHead className="text-end">عملیات</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {approvals.map((approval) => (
                       <TableRow key={approval.approverId}>
-                        <TableCell>{approval.approverName}</TableCell>
-                        <TableCell>{approval.status === "Approved" ? "تایید شده" : approval.status === "Rejected" ? "رد شده" : "در انتظار"}</TableCell>
-                        <TableCell>{approval.date ? new Date(approval.date).toLocaleDateString("fa-IR") : "-"}</TableCell>
-                        <TableCell className="space-x-2 rtl:space-x-reverse">
-                          <Button size="sm" variant="outline" onClick={() => setApprovalStatus(approval.approverId, "Approved")}>
-                            تایید
-                          </Button>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                              {approval.approverName.charAt(0)}
+                            </div>
+                            <span className="font-medium text-sm">{approval.approverName}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={
+                            approval.status === "Approved" ? "default" :
+                            approval.status === "Rejected" ? "destructive" : "secondary"
+                          } className="text-[10px]">
+                            {approval.status === "Approved" ? "تایید شده" : approval.status === "Rejected" ? "رد شده" : "در انتظار"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {approval.date ? new Date(approval.date).toLocaleDateString("fa-IR") : "-"}
+                        </TableCell>
+                        <TableCell className="text-end">
+                          {approval.status === "Pending" && (
+                            <Button size="sm" className="h-7 text-xs shadow-sm" onClick={() => setApprovalStatus(approval.approverId, "Approved")}>
+                              تایید
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -1006,30 +1063,80 @@ export default function DecisionDetailPage() {
       </div>
 
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>چک‌لیست کیفیت</CardTitle>
-            <CardDescription>امتیاز کیفیت: {quality.score}/100</CardDescription>
+        <Card className="overflow-hidden sticky top-20">
+          <CardHeader className="border-b bg-muted/30 pb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">چک‌لیست کیفیت</CardTitle>
+              <div className={cn(
+                "flex size-10 items-center justify-center rounded-xl text-sm font-bold",
+                quality.score >= 80
+                  ? "bg-emerald-500/10 text-emerald-600"
+                  : quality.score >= 50
+                    ? "bg-amber-500/10 text-amber-600"
+                    : "bg-destructive/10 text-destructive"
+              )}>
+                {quality.score}
+              </div>
+            </div>
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all duration-700",
+                  quality.score >= 80
+                    ? "bg-emerald-500"
+                    : quality.score >= 50
+                      ? "bg-amber-500"
+                      : "bg-destructive"
+                )}
+                style={{ width: `${quality.score}%` }}
+              />
+            </div>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-1.5 pt-4">
             {quality.checks.map((check) => (
-              <div key={check.id} className="flex items-center gap-2 text-sm">
-                <div className={cn("size-2 rounded-full", check.passed ? "bg-green-500" : "bg-destructive")} />
-                {check.label}
+              <div key={check.id} className={cn(
+                "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors",
+                check.passed ? "text-foreground" : "text-muted-foreground"
+              )}>
+                <div className={cn(
+                  "flex size-5 shrink-0 items-center justify-center rounded-full text-[10px]",
+                  check.passed ? "bg-emerald-500/15 text-emerald-600" : "bg-destructive/10 text-destructive"
+                )}>
+                  {check.passed ? "✓" : "✗"}
+                </div>
+                <span className="text-xs leading-tight">{check.label}</span>
               </div>
             ))}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>اقدامات سریع</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            {!decision.ownerId && <Button size="sm" variant="outline">تعیین مالک</Button>}
-            {decision.criteria.length === 0 && <Button size="sm" variant="outline">افزودن معیار</Button>}
-          </CardContent>
-        </Card>
+        {(failedChecks.length > 0 || !decision.ownerId || decision.criteria.length === 0) && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">اقدامات سریع</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {!decision.ownerId && (
+                <Button size="sm" variant="outline" className="w-full justify-start gap-2" onClick={() => focusField("owner-field")}>
+                  <div className="size-2 rounded-full bg-amber-500" />
+                  تعیین مالک
+                </Button>
+              )}
+              {decision.criteria.length === 0 && (
+                <Button size="sm" variant="outline" className="w-full justify-start gap-2" onClick={addCriterion}>
+                  <div className="size-2 rounded-full bg-amber-500" />
+                  افزودن معیار
+                </Button>
+              )}
+              {!decision.dueDate && (
+                <Button size="sm" variant="outline" className="w-full justify-start gap-2" onClick={() => focusField("due-date-field")}>
+                  <div className="size-2 rounded-full bg-amber-500" />
+                  تعیین سررسید
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

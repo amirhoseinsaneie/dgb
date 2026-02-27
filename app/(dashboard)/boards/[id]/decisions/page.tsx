@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Download, Filter, MoreHorizontal, Plus, Search } from "lucide-react";
+import { Download, Filter, MoreHorizontal, Plus, Search, X } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -35,6 +39,16 @@ import { checkDecisionQuality } from "@/lib/quality-gates";
 import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
+const statusColors: Record<string, string> = {
+  Draft: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+  "Ready for Review": "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
+  Review: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+  Approved: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800",
+  Implementing: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:border-violet-800",
+  Done: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800",
+  Reversed: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800",
+};
+
 export default function DecisionsListPage() {
   const params = useParams();
   const boardId = params.id as string;
@@ -46,8 +60,12 @@ export default function DecisionsListPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
-  const [impactFilter, setImpactFilter] = useState<"all" | "Low" | "Medium" | "High">("all");
-  const [qualityFilter, setQualityFilter] = useState<"all" | "high" | "medium" | "low">("all");
+  const [impactFilter, setImpactFilter] = useState<
+    "all" | "Low" | "Medium" | "High"
+  >("all");
+  const [qualityFilter, setQualityFilter] = useState<
+    "all" | "high" | "medium" | "low"
+  >("all");
   const [onlyOverdue, setOnlyOverdue] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
@@ -73,7 +91,8 @@ export default function DecisionsListPage() {
 
     return decisions.filter((d) => {
       if (statusFilter !== "all" && d.status !== statusFilter) return false;
-      if (search && !d.title.toLowerCase().includes(search.toLowerCase())) return false;
+      if (search && !d.title.toLowerCase().includes(search.toLowerCase()))
+        return false;
       if (ownerFilter !== "all") {
         const ownerName = d.ownerName || "unassigned";
         if (ownerName !== ownerFilter) return false;
@@ -82,7 +101,11 @@ export default function DecisionsListPage() {
       if (qualityFilter !== "all") {
         const qualityScore = checkDecisionQuality(d, board).score;
         if (qualityFilter === "high" && qualityScore < 80) return false;
-        if (qualityFilter === "medium" && (qualityScore < 50 || qualityScore >= 80)) return false;
+        if (
+          qualityFilter === "medium" &&
+          (qualityScore < 50 || qualityScore >= 80)
+        )
+          return false;
         if (qualityFilter === "low" && qualityScore >= 50) return false;
       }
       if (onlyOverdue) {
@@ -94,29 +117,51 @@ export default function DecisionsListPage() {
       }
       return true;
     });
-  }, [board, decisions, impactFilter, onlyOverdue, ownerFilter, qualityFilter, search, statusFilter]);
+  }, [
+    board,
+    decisions,
+    impactFilter,
+    onlyOverdue,
+    ownerFilter,
+    qualityFilter,
+    search,
+    statusFilter,
+  ]);
 
   const visibleSelectedCount = useMemo(() => {
-    const visibleIds = new Set(filteredDecisions.map((decision) => decision.id));
+    const visibleIds = new Set(
+      filteredDecisions.map((decision) => decision.id)
+    );
     return selectedIds.filter((id) => visibleIds.has(id)).length;
   }, [filteredDecisions, selectedIds]);
 
   const isAllVisibleSelected =
-    filteredDecisions.length > 0 && visibleSelectedCount === filteredDecisions.length;
+    filteredDecisions.length > 0 &&
+    visibleSelectedCount === filteredDecisions.length;
 
   const toggleSelectAll = () => {
-    const visibleIds = new Set(filteredDecisions.map((decision) => decision.id));
+    const visibleIds = new Set(
+      filteredDecisions.map((decision) => decision.id)
+    );
 
     if (isAllVisibleSelected) {
-      setSelectedIds((current) => current.filter((id) => !visibleIds.has(id)));
+      setSelectedIds((current) =>
+        current.filter((id) => !visibleIds.has(id))
+      );
     } else {
-      setSelectedIds((current) => Array.from(new Set([...current, ...filteredDecisions.map((d) => d.id)])));
+      setSelectedIds((current) =>
+        Array.from(
+          new Set([...current, ...filteredDecisions.map((d) => d.id)])
+        )
+      );
     }
   };
 
   const toggleSelect = (id: string) => {
     setSelectedIds((current) =>
-      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id]
     );
   };
 
@@ -145,7 +190,7 @@ export default function DecisionsListPage() {
               <Download className="me-2 size-4" />
               خروجی
             </Button>
-            <Button asChild size="sm">
+            <Button asChild size="sm" className="shadow-sm">
               <Link href={`/boards/${boardId}/decisions/new`}>
                 <Plus className="me-2 size-4" />
                 تصمیم جدید
@@ -157,11 +202,11 @@ export default function DecisionsListPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative w-64">
+          <div className="relative w-56">
             <Search className="absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="جستجو در تصمیمات..."
-              className="h-9 ps-9"
+              className="h-9 ps-9 bg-muted/50 border-transparent hover:border-border transition-colors"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -181,17 +226,17 @@ export default function DecisionsListPage() {
           </Select>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9">
-                <Filter className="me-2 size-4" />
+              <Button variant="outline" size="sm" className="h-9 gap-2">
+                <Filter className="size-3.5" />
                 فیلترهای بیشتر
                 {activeAdvancedFilters > 0 && (
-                  <Badge variant="secondary" className="ms-2 px-1.5 text-xs">
+                  <Badge className="size-5 rounded-full p-0 text-[10px] justify-center">
                     {activeAdvancedFilters}
                   </Badge>
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-80 space-y-3">
+            <PopoverContent align="start" className="w-80 space-y-4">
               <div className="space-y-2">
                 <p className="text-sm font-medium">مالک</p>
                 <Select value={ownerFilter} onValueChange={setOwnerFilter}>
@@ -214,7 +259,11 @@ export default function DecisionsListPage() {
                 <p className="text-sm font-medium">تاثیر</p>
                 <Select
                   value={impactFilter}
-                  onValueChange={(value) => setImpactFilter(value as "all" | "Low" | "Medium" | "High")}
+                  onValueChange={(value) =>
+                    setImpactFilter(
+                      value as "all" | "Low" | "Medium" | "High"
+                    )
+                  }
                 >
                   <SelectTrigger className="h-9 w-full">
                     <SelectValue placeholder="همه سطوح تاثیر" />
@@ -232,7 +281,11 @@ export default function DecisionsListPage() {
                 <p className="text-sm font-medium">کیفیت</p>
                 <Select
                   value={qualityFilter}
-                  onValueChange={(value) => setQualityFilter(value as "all" | "high" | "medium" | "low")}
+                  onValueChange={(value) =>
+                    setQualityFilter(
+                      value as "all" | "high" | "medium" | "low"
+                    )
+                  }
                 >
                   <SelectTrigger className="h-9 w-full">
                     <SelectValue placeholder="همه سطوح کیفیت" />
@@ -240,17 +293,21 @@ export default function DecisionsListPage() {
                   <SelectContent>
                     <SelectItem value="all">همه سطوح کیفیت</SelectItem>
                     <SelectItem value="high">خوب (80% به بالا)</SelectItem>
-                    <SelectItem value="medium">متوسط (50% تا 79%)</SelectItem>
+                    <SelectItem value="medium">
+                      متوسط (50% تا 79%)
+                    </SelectItem>
                     <SelectItem value="low">ضعیف (کمتر از 50%)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <label className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+              <label className="flex items-center justify-between rounded-lg border px-3 py-2.5 text-sm cursor-pointer hover:bg-muted/50 transition-colors">
                 <span>فقط تصمیمات سررسید گذشته</span>
                 <Checkbox
                   checked={onlyOverdue}
-                  onCheckedChange={(checked) => setOnlyOverdue(checked === true)}
+                  onCheckedChange={(checked) =>
+                    setOnlyOverdue(checked === true)
+                  }
                 />
               </label>
 
@@ -268,21 +325,32 @@ export default function DecisionsListPage() {
         </div>
 
         {visibleSelectedCount > 0 && (
-          <div className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1 text-sm font-medium">
-            {visibleSelectedCount} مورد انتخاب شده
-            <div className="ms-4 flex gap-2">
-              <Button variant="ghost" size="sm" className="h-7 px-2">تغییر وضعیت</Button>
-              <Button variant="ghost" size="sm" className="h-7 px-2">بایگانی</Button>
-              <Button variant="ghost" size="sm" className="h-7 px-2 text-destructive">حذف</Button>
+          <div className="flex items-center gap-2 rounded-xl border bg-primary/5 px-4 py-2 text-sm font-medium animate-fade-in">
+            <span className="text-primary">{visibleSelectedCount}</span>
+            <span>مورد انتخاب شده</span>
+            <div className="ms-3 flex gap-1.5">
+              <Button variant="ghost" size="sm" className="h-7 px-2.5 text-xs">
+                تغییر وضعیت
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 px-2.5 text-xs">
+                بایگانی
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2.5 text-xs text-destructive"
+              >
+                حذف
+              </Button>
             </div>
           </div>
         )}
       </div>
 
-      <div className="rounded-lg border bg-card">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="hover:bg-transparent">
               <TableHead className="w-[40px]">
                 <Checkbox
                   checked={isAllVisibleSelected}
@@ -301,15 +369,21 @@ export default function DecisionsListPage() {
           <TableBody>
             {filteredDecisions.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
-                  تصمیمی یافت نشد.
+                <TableCell
+                  colSpan={8}
+                  className="h-32 text-center text-muted-foreground"
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <Search className="size-8 text-muted-foreground/40" />
+                    <p>تصمیمی یافت نشد.</p>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
             {filteredDecisions.map((decision) => {
               const quality = checkDecisionQuality(decision, board);
               return (
-                <TableRow key={decision.id}>
+                <TableRow key={decision.id} className="group">
                   <TableCell>
                     <Checkbox
                       checked={selectedIds.includes(decision.id)}
@@ -319,50 +393,105 @@ export default function DecisionsListPage() {
                   <TableCell>
                     <Link
                       href={`/boards/${boardId}/decisions/${decision.id}`}
-                      className="font-medium hover:underline"
+                      className="font-medium hover:text-primary transition-colors"
                     >
                       {decision.title}
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">
-                      {config.defaultColumnLabels[decision.status] || decision.status}
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "text-xs font-medium",
+                        statusColors[decision.status]
+                      )}
+                    >
+                      {config.defaultColumnLabels[decision.status] ||
+                        decision.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{decision.ownerName || "-"}</TableCell>
                   <TableCell>
-                    <Badge variant={decision.impact === "High" ? "destructive" : "secondary"}>
-                      {decision.impact === "High" ? "بالا" : decision.impact === "Medium" ? "متوسط" : "کم"}
+                    {decision.ownerName ? (
+                      <div className="flex items-center gap-2">
+                        <div className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                          {decision.ownerName.charAt(0)}
+                        </div>
+                        <span className="text-sm">{decision.ownerName}</span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        decision.impact === "High"
+                          ? "destructive"
+                          : "secondary"
+                      }
+                    >
+                      {decision.impact === "High"
+                        ? "بالا"
+                        : decision.impact === "Medium"
+                          ? "متوسط"
+                          : "کم"}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-12 rounded-full bg-muted">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-1.5 w-14 rounded-full bg-muted overflow-hidden">
                         <div
                           className={cn(
-                            "h-full rounded-full",
-                            quality.score >= 80 ? "bg-green-600" : quality.score >= 50 ? "bg-amber-600" : "bg-destructive"
+                            "h-full rounded-full transition-all duration-500",
+                            quality.score >= 80
+                              ? "bg-emerald-500"
+                              : quality.score >= 50
+                                ? "bg-amber-500"
+                                : "bg-destructive"
                           )}
                           style={{ width: `${quality.score}%` }}
                         />
                       </div>
-                      <span className="text-xs">{quality.score}%</span>
+                      <span
+                        className={cn(
+                          "text-xs font-semibold tabular-nums",
+                          quality.score >= 80
+                            ? "text-emerald-600"
+                            : quality.score >= 50
+                              ? "text-amber-600"
+                              : "text-destructive"
+                        )}
+                      >
+                        {quality.score}%
+                      </span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{decision.dueDate || "-"}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {decision.dueDate || "-"}
+                  </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="size-8">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
                           <MoreHorizontal className="size-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/boards/${boardId}/decisions/${decision.id}`}>مشاهده</Link>
+                          <Link
+                            href={`/boards/${boardId}/decisions/${decision.id}`}
+                          >
+                            مشاهده
+                          </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem>ویرایش</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">حذف</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive">
+                          حذف
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
