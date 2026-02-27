@@ -31,9 +31,17 @@ import { cn, toJalali } from "@/lib/utils";
 export default function BoardDashboardPage() {
   const params = useParams();
   const boardId = params.id as string;
-  const { getBoard, getBoardDecisions } = useApp();
+  const { getBoard, getBoardDecisions, isLoading } = useApp();
   const board = getBoard(boardId);
   const boardDecisions = getBoardDecisions(boardId);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-3">
+        <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   if (!board) {
     return (
@@ -85,6 +93,88 @@ export default function BoardDashboardPage() {
         new Date(b.dueDate as string).getTime()
     )
     .slice(0, 5);
+
+  if (boardDecisions.length === 0) {
+    return (
+      <div className="space-y-8">
+        <PageHeader
+          title={board.name}
+          subtitle="سلامت تصمیمات، تصمیمات باز و سررسیدهای آینده"
+          breadcrumbs={[
+            { label: "بوردها", href: "/boards" },
+            { label: board.name, href: `/boards/${boardId}` },
+          ]}
+        />
+
+        <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-muted-foreground/25 bg-muted/20">
+          <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+            <Zap className="size-7 text-primary" />
+          </div>
+          <div className="text-center space-y-1.5">
+            <p className="text-lg font-semibold">هنوز تصمیمی ثبت نشده</p>
+            <p className="text-sm text-muted-foreground max-w-sm">
+              اولین تصمیم خود را ایجاد کنید تا داشبورد سلامت بورد فعال شود.
+            </p>
+          </div>
+          <Button asChild size="sm" className="mt-2 shadow-sm">
+            <Link href={`/boards/${boardId}/decisions/new`}>
+              <Plus className="me-2 size-4" />
+              ایجاد اولین تصمیم
+            </Link>
+          </Button>
+        </div>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">اقدامات سریع</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              {[
+                {
+                  href: `/boards/${boardId}/decisions/new`,
+                  label: "تصمیم جدید",
+                  icon: Plus,
+                  primary: true,
+                },
+                {
+                  href: `/boards/${boardId}/kanban`,
+                  label: "بورد کانبان",
+                  icon: LayoutGrid,
+                },
+                {
+                  href: `/boards/${boardId}/decisions`,
+                  label: "لیست تصمیمات",
+                  icon: List,
+                },
+                { href: "/reports", label: "گزارش‌ها", icon: BarChart3 },
+                {
+                  href: `/boards/${boardId}/settings`,
+                  label: "تنظیمات",
+                  icon: Settings,
+                },
+              ].map((action) => (
+                <Button
+                  key={action.href}
+                  asChild
+                  variant={action.primary ? "default" : "outline"}
+                  className={cn(
+                    "h-auto flex-col gap-2 py-4 transition-all hover:shadow-sm",
+                    action.primary && "shadow-md"
+                  )}
+                >
+                  <Link href={action.href}>
+                    <action.icon className="size-5" />
+                    <span className="text-xs font-medium">{action.label}</span>
+                  </Link>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const stats = [
     {

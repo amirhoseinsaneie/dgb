@@ -100,6 +100,23 @@ export default function ReportsPage() {
     ).length,
   };
 
+  const approvedStatuses = ["Approved", "Implementing", "Done", "Reversed"];
+  const completedDecisions = decisions.filter(
+    (d) => approvedStatuses.includes(d.status) && d.createdAt && d.updatedAt
+  );
+  const avgApprovalDays =
+    completedDecisions.length > 0
+      ? completedDecisions.reduce((sum, d) => {
+          const created = new Date(d.createdAt).getTime();
+          const updated = new Date(d.updatedAt).getTime();
+          return sum + (updated - created) / (1000 * 60 * 60 * 24);
+        }, 0) / completedDecisions.length
+      : 0;
+  const avgApprovalLabel =
+    completedDecisions.length > 0
+      ? `${avgApprovalDays.toLocaleString("fa-IR", { maximumFractionDigits: 1 })} روز`
+      : "—";
+
   const reportTabs = [
     { key: "health", label: "سلامت تصمیمات" },
     { key: "overdue", label: "عقب‌افتاده و ریسک‌ها" },
@@ -137,8 +154,8 @@ export default function ReportsPage() {
     },
     {
       label: "میانگین زمان تایید",
-      value: "۴.۲ روز",
-      sub: "میانگین",
+      value: avgApprovalLabel,
+      sub: `${completedDecisions.length.toLocaleString("fa-IR")} تصمیم تایید شده`,
       icon: BarChart3,
       color: "text-amber-600",
       bg: "bg-amber-500/10",

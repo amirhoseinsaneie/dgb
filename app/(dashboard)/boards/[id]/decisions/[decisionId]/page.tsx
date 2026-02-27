@@ -46,7 +46,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { checkDecisionQuality } from "@/lib/quality-gates";
-import { useApp } from "@/lib/store";
+import { useApp, DEFAULT_COLUMNS } from "@/lib/store";
 import type { Decision } from "@/lib/types";
 import { clamp, cn, parseLocalizedInt, toJalali, toJalaliDateTime, toJalaliTime } from "@/lib/utils";
 
@@ -75,7 +75,7 @@ export default function DecisionDetailPage() {
   const boardId = params.id as string;
   const decisionId = params.decisionId as string;
   const router = useRouter();
-  const { getBoard, getDecision, updateDecision, addDecision, deleteDecision, users, config } = useApp();
+  const { getBoard, getDecision, updateDecision, addDecision, deleteDecision, users, config, isLoading } = useApp();
 
   const board = getBoard(boardId);
   const decision = getDecision(decisionId);
@@ -127,6 +127,14 @@ export default function DecisionDetailPage() {
         comment: "",
       }))
   );
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-3">
+        <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   if (!board || !decision) {
     return (
@@ -383,7 +391,7 @@ export default function DecisionDetailPage() {
                 </div>
               </SelectTrigger>
               <SelectContent>
-                {board.columns.map((column) => (
+                {(board.columns.length ? board.columns : [...DEFAULT_COLUMNS]).map((column) => (
                   <SelectItem key={column} value={column}>
                     {config.defaultColumnLabels[column] || column}
                   </SelectItem>

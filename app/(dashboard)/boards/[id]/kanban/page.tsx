@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   AlertCircle,
+  AlertTriangle,
   MoreHorizontal,
   Plus,
   Search,
@@ -27,7 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { checkDecisionQuality } from "@/lib/quality-gates";
-import { useApp } from "@/lib/store";
+import { useApp, DEFAULT_COLUMNS } from "@/lib/store";
 import type { Decision } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -54,7 +55,7 @@ const columnDotColors: Record<string, string> = {
 export default function KanbanPage() {
   const params = useParams();
   const boardId = params.id as string;
-  const { getBoard, getBoardDecisions, updateDecision, deleteDecision, config } = useApp();
+  const { getBoard, getBoardDecisions, updateDecision, deleteDecision, updateBoard, config, isLoading } = useApp();
 
   const board = getBoard(boardId);
   const decisions = getBoardDecisions(boardId);
@@ -63,7 +64,13 @@ export default function KanbanPage() {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
-  const columns = board?.columns || [];
+  const columns = board?.columns?.length ? board.columns : [...DEFAULT_COLUMNS];
+
+  // Auto-repair: if board has no columns saved, persist the defaults
+  const needsColumnRepair = !isLoading && board && !board.columns?.length;
+  if (needsColumnRepair) {
+    void updateBoard(boardId, { columns: [...DEFAULT_COLUMNS] });
+  }
 
   const filteredDecisions = useMemo(() => {
     return decisions.filter((d) =>
@@ -71,7 +78,65 @@ export default function KanbanPage() {
     );
   }, [decisions, searchQuery]);
 
-  if (!board) return null;
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-3">
+        <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!board) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-3">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-muted">
+          <AlertTriangle className="size-6 text-muted-foreground" />
+        </div>
+        <p className="text-muted-foreground font-medium">بورد یافت نشد</p>
+      </div>
+    );
+  }
+
+  if (decisions.length === 0) {
+    return (
+      <div className="flex h-[calc(100vh-8rem)] flex-col gap-6">
+        <PageHeader
+          title="بورد کانبان"
+          breadcrumbs={[
+            { label: "بوردها", href: "/boards" },
+            { label: board.name, href: `/boards/${boardId}` },
+            { label: "کانبان", href: `/boards/${boardId}/kanban` },
+          ]}
+          actions={
+            <Button asChild size="sm" className="shadow-sm">
+              <Link href={`/boards/${boardId}/decisions/new`}>
+                <Plus className="me-2 size-4" />
+                تصمیم جدید
+              </Link>
+            </Button>
+          }
+        />
+
+        <div className="flex grow flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-muted-foreground/25 bg-muted/20">
+          <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+            <Plus className="size-7 text-primary" />
+          </div>
+          <div className="text-center space-y-1.5">
+            <p className="text-lg font-semibold">هنوز تصمیمی ثبت نشده</p>
+            <p className="text-sm text-muted-foreground max-w-sm">
+              تصمیمات خود را ایجاد کنید تا بورد کانبان فعال شود.
+            </p>
+          </div>
+          <Button asChild size="sm" className="mt-2 shadow-sm">
+            <Link href={`/boards/${boardId}/decisions/new`}>
+              <Plus className="me-2 size-4" />
+              ایجاد اولین تصمیم
+            </Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const onDragStart = (id: string) => {
     setDraggedId(id);

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { dataStore } from "@/lib/data-store/json-file-store";
+import { dataStore } from "@/lib/data-store/mongodb-store";
 import type { Decision } from "@/lib/types";
 
 export const runtime = "nodejs";

@@ -1,10 +1,5 @@
 "use client";
 
-import boardsSnapshot from "@/data/boards.json";
-import configSnapshot from "@/data/config.json";
-import decisionsSnapshot from "@/data/decisions.json";
-import templatesSnapshot from "@/data/templates.json";
-import usersSnapshot from "@/data/users.json";
 import {
   createContext,
   useCallback,
@@ -18,9 +13,19 @@ import type { AppDatabase, Board, Decision, Template } from "./types";
 
 type AppState = AppDatabase;
 
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+}
+
 interface AppContextValue extends AppState {
   isLoading: boolean;
+  currentUser: AuthUser | null;
+  authLoading: boolean;
   refresh: () => Promise<void>;
+  logout: () => Promise<void>;
+  setCurrentUser: (user: AuthUser | null) => void;
   getBoard: (id: string) => Board | undefined;
   getBoardDecisions: (boardId: string) => Decision[];
   getDecision: (id: string) => Decision | undefined;
@@ -36,12 +41,54 @@ interface AppContextValue extends AppState {
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-const seedState: AppState = {
-  boards: boardsSnapshot as AppState["boards"],
-  decisions: decisionsSnapshot as AppState["decisions"],
-  templates: templatesSnapshot as AppState["templates"],
-  users: usersSnapshot as AppState["users"],
-  config: configSnapshot as AppState["config"],
+export const DEFAULT_COLUMNS = [
+  "Draft",
+  "Ready for Review",
+  "Review",
+  "Approved",
+  "Implementing",
+  "Done",
+  "Reversed",
+] as const;
+
+export const DEFAULT_COLUMN_LABELS: Record<string, string> = {
+  Draft: "پیش‌نویس",
+  "Ready for Review": "آماده بررسی",
+  Review: "در حال بررسی",
+  Approved: "تایید شده",
+  Implementing: "در حال پیاده‌سازی",
+  Done: "انجام شده",
+  Reversed: "برگشت خورده",
+};
+
+export const DEFAULT_CATEGORIES = [
+  "معماری",
+  "امنیت",
+  "محصول",
+  "فرآیند",
+  "تیم",
+];
+
+export const DEFAULT_QUALITY_GATES = [
+  { id: "gate-owner", label: "دارای مالک", description: "تصمیم باید مالک داشته باشد.", enabled: true },
+  { id: "gate-criteria", label: "دارای معیار", description: "تصمیم باید شامل معیارهای وزن‌دار باشد.", enabled: true },
+  { id: "gate-due-date", label: "دارای تاریخ سررسید", description: "تصمیم باید تاریخ سررسید داشته باشد.", enabled: true },
+  { id: "gate-evidence", label: "شواهد برای تصمیم برگشت‌ناپذیر", description: "تصمیم‌های برگشت‌ناپذیر نیاز به شواهد و یادداشت ریسک دارند.", enabled: true },
+  { id: "gate-approvals", label: "تاییدکنندگان برای تاثیر بالا", description: "تصمیم‌های با تاثیر بالا باید تاییدکننده داشته باشند.", enabled: true },
+];
+
+const emptyState: AppState = {
+  boards: [],
+  decisions: [],
+  templates: [],
+  users: [],
+  config: {
+    defaultColumns: [...DEFAULT_COLUMNS],
+    defaultColumnLabels: { ...DEFAULT_COLUMN_LABELS },
+    defaultQualityGates: DEFAULT_QUALITY_GATES,
+    defaultCategories: [...DEFAULT_CATEGORIES],
+    defaultCategoryLabels: Object.fromEntries(DEFAULT_CATEGORIES.map((c) => [c, c])),
+  },
 };
 
 async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
@@ -64,8 +111,10 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AppState>(seedState);
+  const [state, setState] = useState<AppState>(emptyState);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     const nextState = await apiRequest<AppState>("/api/db");
@@ -80,8 +129,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [refresh]);
 
+  const logout = useCallback(async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setCurrentUser(null);
+    window.location.href = "/login";
+  }, []);
+
   useEffect(() => {
     const run = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) setCurrentUser(data.user);
+        }
+      } catch {
+        /* not logged in */
+      } finally {
+        setAuthLoading(false);
+      }
+
       try {
         await refresh();
       } catch (error) {
@@ -262,7 +329,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       ...state,
       isLoading,
+      currentUser,
+      authLoading,
       refresh,
+      logout,
+      setCurrentUser,
       getBoard,
       getBoardDecisions,
       getDecision,
@@ -278,7 +349,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [
       state,
       isLoading,
+      currentUser,
+      authLoading,
       refresh,
+      logout,
       getBoard,
       getBoardDecisions,
       getDecision,

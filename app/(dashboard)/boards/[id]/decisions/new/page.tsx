@@ -359,38 +359,31 @@ export default function NewDecisionPage() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>قالب تصمیم (اختیاری)</Label>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Select
-                    value={selectedTemplateId || "__none"}
-                    onValueChange={(value) => {
-                      setSelectedTemplateId(value === "__none" ? "" : value);
+                <Select
+                  value={selectedTemplateId || "__none"}
+                  onValueChange={(value) => {
+                    if (value === "__none") {
+                      setSelectedTemplateId("");
                       setTemplateNotice("");
-                    }}
-                  >
-                    <SelectTrigger className="sm:flex-1">
-                      <SelectValue placeholder="انتخاب قالب" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none">بدون قالب</SelectItem>
-                      {templates.map((template) => (
-                        <SelectItem key={template.id} value={template.id}>
-                          {template.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={!selectedTemplate}
-                    onClick={() => {
-                      if (!selectedTemplate) return;
-                      applyTemplate(selectedTemplate);
-                    }}
-                  >
-                    اعمال قالب
-                  </Button>
-                </div>
+                      setCriteria([{ id: crypto.randomUUID(), name: "", weight: 3, notes: "" }]);
+                    } else {
+                      const tmpl = templates.find((t) => t.id === value);
+                      if (tmpl) applyTemplate(tmpl);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="انتخاب قالب" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">بدون قالب</SelectItem>
+                    {templates.map((template) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {selectedTemplate && (
                   <p className="text-xs text-muted-foreground">
                     {selectedTemplate.criteria.length} معیار پیش‌فرض | الزامی‌ها:{" "}

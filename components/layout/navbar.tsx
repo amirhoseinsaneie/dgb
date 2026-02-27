@@ -10,6 +10,7 @@ import {
   FileText,
   HelpCircle,
   LayoutDashboard,
+  LogOut,
   Menu,
   Moon,
   Search,
@@ -23,14 +24,15 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useApp } from "@/lib/store";
 
-const navItems = [
+const staticNavItems = [
   { href: "/boards", label: "بوردها", icon: LayoutDashboard },
-  { href: "/boards/1/decisions", label: "تصمیمات", icon: FileText },
   { href: "/reports", label: "گزارش‌ها", icon: BarChart3 },
   { href: "/templates", label: "قالب‌ها", icon: FileStack },
   { href: "/help", label: "راهنما", icon: HelpCircle },
@@ -40,6 +42,19 @@ export function Navbar() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { currentUser, logout, boards } = useApp();
+
+  const boardIdMatch = pathname.match(/\/boards\/([^/]+)/);
+  const activeBoardId = boardIdMatch?.[1];
+  const activeBoard = boards.find((b) => b.id === activeBoardId);
+
+  const navItems = [
+    ...staticNavItems.slice(0, 1),
+    ...(activeBoard
+      ? [{ href: `/boards/${activeBoard.id}/decisions`, label: "تصمیمات", icon: FileText }]
+      : []),
+    ...staticNavItems.slice(1),
+  ];
 
   return (
     <header className="sticky top-0 z-40 border-b glass">
@@ -83,23 +98,32 @@ export function Navbar() {
           })}
         </nav>
 
+
         <div className="ms-auto flex items-center gap-1.5">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 hidden sm:flex">
-                زمینه: پروژه X
-                <ChevronDown className="size-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href="/boards/1">پروژه X</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/boards/2">تیم پلتفرم</Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {boards.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2 hidden sm:flex max-w-[200px]">
+                  <span className="truncate">
+                    {activeBoard ? activeBoard.name : "انتخاب بورد"}
+                  </span>
+                  <ChevronDown className="size-3.5 shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {boards.map((board) => (
+                  <DropdownMenuItem key={board.id} asChild>
+                    <Link
+                      href={`/boards/${board.id}`}
+                      className={cn(activeBoardId === board.id && "font-semibold")}
+                    >
+                      {board.name}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
           <Link href="/search" className="hidden lg:block">
             <div className="relative w-52">
@@ -123,10 +147,34 @@ export function Navbar() {
             <span className="sr-only">تغییر تم</span>
           </Button>
 
-          <Button variant="ghost" size="icon" className="size-8">
-            <User className="size-4" />
-            <span className="sr-only">پروفایل</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-8">
+                <User className="size-4" />
+                <span className="sr-only">پروفایل</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {currentUser && (
+                <>
+                  <div className="px-2 py-2">
+                    <p className="text-sm font-medium">{currentUser.name}</p>
+                    <p className="text-xs text-muted-foreground truncate" dir="ltr">
+                      {currentUser.email}
+                    </p>
+                  </div>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              <DropdownMenuItem
+                onClick={() => void logout()}
+                className="gap-2 text-destructive focus:text-destructive"
+              >
+                <LogOut className="size-4" />
+                خروج
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <Button
             variant="ghost"

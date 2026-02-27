@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Download, Filter, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
+import { AlertTriangle, Download, Filter, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { checkDecisionQuality } from "@/lib/quality-gates";
-import { useApp } from "@/lib/store";
+import { useApp, DEFAULT_COLUMNS } from "@/lib/store";
 import { cn, toJalali } from "@/lib/utils";
 
 const statusColors: Record<string, string> = {
@@ -52,7 +52,7 @@ const statusColors: Record<string, string> = {
 export default function DecisionsListPage() {
   const params = useParams();
   const boardId = params.id as string;
-  const { getBoard, getBoardDecisions, deleteDecision, updateDecision, config } = useApp();
+  const { getBoard, getBoardDecisions, deleteDecision, updateDecision, config, isLoading } = useApp();
 
   const board = getBoard(boardId);
   const decisions = getBoardDecisions(boardId);
@@ -172,7 +172,66 @@ export default function DecisionsListPage() {
     setOnlyOverdue(false);
   };
 
-  if (!board) return null;
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-3">
+        <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!board) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-3">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-muted">
+          <AlertTriangle className="size-6 text-muted-foreground" />
+        </div>
+        <p className="text-muted-foreground font-medium">بورد یافت نشد</p>
+      </div>
+    );
+  }
+
+  if (decisions.length === 0) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="تصمیمات"
+          subtitle={`مشاهده و مدیریت تمام تصمیمات در ${board.name}`}
+          breadcrumbs={[
+            { label: "بوردها", href: "/boards" },
+            { label: board.name, href: `/boards/${boardId}` },
+            { label: "تصمیمات", href: `/boards/${boardId}/decisions` },
+          ]}
+          actions={
+            <Button asChild size="sm" className="shadow-sm">
+              <Link href={`/boards/${boardId}/decisions/new`}>
+                <Plus className="me-2 size-4" />
+                تصمیم جدید
+              </Link>
+            </Button>
+          }
+        />
+
+        <div className="flex min-h-[400px] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-muted-foreground/25 bg-muted/20">
+          <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+            <Search className="size-7 text-primary" />
+          </div>
+          <div className="text-center space-y-1.5">
+            <p className="text-lg font-semibold">هنوز تصمیمی ثبت نشده</p>
+            <p className="text-sm text-muted-foreground max-w-sm">
+              با ایجاد اولین تصمیم، لیست تصمیمات این بورد را مدیریت کنید.
+            </p>
+          </div>
+          <Button asChild size="sm" className="mt-2 shadow-sm">
+            <Link href={`/boards/${boardId}/decisions/new`}>
+              <Plus className="me-2 size-4" />
+              ایجاد اولین تصمیم
+            </Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -235,7 +294,7 @@ export default function DecisionsListPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">همه وضعیت‌ها</SelectItem>
-              {board.columns.map((col) => (
+              {(board.columns.length ? board.columns : [...DEFAULT_COLUMNS]).map((col) => (
                 <SelectItem key={col} value={col}>
                   {config.defaultColumnLabels[col] || col}
                 </SelectItem>
