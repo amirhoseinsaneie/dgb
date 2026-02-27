@@ -32,11 +32,11 @@ import { cn } from "@/lib/utils";
 const chartConfig = {
   value: {
     label: "مقدار",
-    color: "hsl(var(--chart-1))",
+    color: "var(--chart-1)",
   },
   count: {
     label: "تعداد",
-    color: "hsl(var(--chart-2))",
+    color: "var(--chart-2)",
   },
 } satisfies ChartConfig;
 

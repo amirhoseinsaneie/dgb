@@ -32,7 +32,8 @@ import { clamp, cn, parseLocalizedInt } from "@/lib/utils";
 const steps = [
   { id: "basic", title: "اطلاعات پایه" },
   { id: "context", title: "زمینه و مسئله" },
-  { id: "options", title: "گزینه‌ها و معیارها" },
+  { id: "criteria", title: "معیارهای تصمیم" },
+  { id: "options", title: "گزینه‌ها" },
   { id: "risk", title: "ریسک و اطمینان" },
 ];
 
@@ -49,9 +50,9 @@ const requiredFieldStepMap: Record<string, number> = {
   owner: 0,
   due: 0,
   criteria: 2,
-  options: 2,
-  evidence: 3,
-  approvers: 3,
+  options: 3,
+  evidence: 4,
+  approvers: 4,
 };
 
 const normalizeDecisionWeight = (
@@ -283,49 +284,53 @@ export default function NewDecisionPage() {
         ]}
       />
 
-      <div className="relative flex items-center justify-between rounded-xl border bg-muted/30 p-4">
-        {steps.map((step, index) => {
-          const isComplete = index < currentStep;
-          const isCurrent = index === currentStep;
-          return (
-            <div key={step.id} className="relative z-10 flex items-center">
+      <div className="rounded-xl border bg-muted/30 px-4 py-5">
+        <div className="relative flex justify-between">
+          {steps.map((step, index) => {
+            const isComplete = index < currentStep;
+            const isCurrent = index === currentStep;
+            return (
               <button
+                key={step.id}
                 type="button"
                 onClick={() => setCurrentStep(index)}
-                className={cn(
-                  "flex size-9 items-center justify-center rounded-full text-xs font-bold transition-all",
-                  isComplete
-                    ? "bg-emerald-500 text-white shadow-sm"
-                    : isCurrent
-                      ? "bg-primary text-primary-foreground shadow-md ring-4 ring-primary/20"
-                      : "bg-muted text-muted-foreground"
-                )}
+                className="relative z-10 flex flex-col items-center gap-2 group"
               >
-                {isComplete ? "✓" : index + 1}
-              </button>
-              <span
-                className={cn(
-                  "ms-2 hidden text-xs font-medium sm:inline transition-colors",
-                  isCurrent
-                    ? "text-foreground"
-                    : isComplete
-                      ? "text-emerald-600"
-                      : "text-muted-foreground"
-                )}
-              >
-                {step.title}
-              </span>
-              {index < steps.length - 1 && (
                 <div
                   className={cn(
-                    "mx-3 h-0.5 w-6 rounded-full transition-colors sm:mx-4 sm:w-12",
-                    index < currentStep ? "bg-emerald-500" : "bg-muted"
+                    "flex size-8 items-center justify-center rounded-full text-xs font-bold transition-all",
+                    isComplete
+                      ? "bg-emerald-500 text-white shadow-sm"
+                      : isCurrent
+                        ? "bg-primary text-primary-foreground shadow-md ring-4 ring-primary/20"
+                        : "bg-muted text-muted-foreground"
                   )}
-                />
-              )}
-            </div>
-          );
-        })}
+                >
+                  {isComplete ? "✓" : index + 1}
+                </div>
+                <span
+                  className={cn(
+                    "text-[11px] font-medium leading-tight text-center max-w-[72px] transition-colors",
+                    isCurrent
+                      ? "text-foreground"
+                      : isComplete
+                        ? "text-emerald-600"
+                        : "text-muted-foreground"
+                  )}
+                >
+                  {step.title}
+                </span>
+              </button>
+            );
+          })}
+          <div className="pointer-events-none absolute top-4 right-0 left-0 flex items-center px-[10%]">
+            <div className="h-0.5 w-full rounded-full bg-muted" />
+            <div
+              className="absolute h-0.5 rounded-full bg-emerald-500 transition-all duration-500 right-[10%]"
+              style={{ width: `${(currentStep / (steps.length - 1)) * 80}%` }}
+            />
+          </div>
+        </div>
       </div>
 
       <Card className="overflow-hidden">
@@ -416,7 +421,7 @@ export default function NewDecisionPage() {
                     value={formData.ownerId}
                     onValueChange={(v) => updateForm({ ownerId: v })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="انتخاب مالک" />
                     </SelectTrigger>
                     <SelectContent>
@@ -457,7 +462,7 @@ export default function NewDecisionPage() {
                     value={formData.category}
                     onValueChange={(v) => updateForm({ category: v })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -477,7 +482,7 @@ export default function NewDecisionPage() {
                       updateForm({ impact: v as Decision["impact"] })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -492,87 +497,113 @@ export default function NewDecisionPage() {
           )}
 
           {currentStep === 2 && (
-            <div className="space-y-6">
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                معیارها مشخص می‌کنند که تصمیم بر اساس چه عواملی ارزیابی می‌شود. هر معیار یک وزن (۱ تا ۵) دارد که اهمیت آن را نشان می‌دهد.
+              </p>
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-2">
+                  معیارها
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground">{criteria.length}</span>
+                </Label>
+                <Button type="button" variant="outline" size="sm" onClick={addCriterion} className="gap-2 border-dashed">
+                  <Plus className="size-3.5" />
+                  افزودن معیار
+                </Button>
+              </div>
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="flex items-center gap-2">
-                    معیارها
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground">{criteria.length}</span>
-                  </Label>
-                  <Button type="button" variant="outline" size="sm" onClick={addCriterion} className="gap-2 border-dashed">
-                    <Plus className="size-3.5" />
-                    افزودن معیار
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  {criteria.map((criterion) => (
-                    <div key={criterion.id} className="group space-y-2 rounded-xl border p-3 transition-all hover:shadow-sm">
-                      <div className="grid gap-2 sm:grid-cols-[1fr_110px_40px]">
-                        <Input
-                          placeholder="نام معیار"
-                          value={criterion.name}
+                {criteria.map((criterion, index) => (
+                  <div key={criterion.id} className="group space-y-3 rounded-xl border p-4 transition-all hover:shadow-sm">
+                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <span className="flex size-5 items-center justify-center rounded-md bg-muted text-[10px] font-bold">{index + 1}</span>
+                      معیار {index + 1}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">نام معیار</Label>
+                      <Input
+                        placeholder="مثلا: هزینه پیاده‌سازی، زمان تحویل، مقیاس‌پذیری"
+                        value={criterion.name}
+                        onChange={(e) =>
+                          updateCriterion(criterion.id, { name: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">توضیحات (اختیاری)</Label>
+                        <Textarea
+                          rows={2}
+                          placeholder="چرا این معیار مهم است؟ چطور اندازه‌گیری می‌شود؟"
+                          value={criterion.notes || ""}
                           onChange={(e) =>
-                            updateCriterion(criterion.id, { name: e.target.value })
+                            updateCriterion(criterion.id, { notes: e.target.value })
                           }
                         />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">وزن (اهمیت)</Label>
                         <Input
                           type="number"
                           min={1}
                           max={5}
                           value={criterion.weight}
-                          placeholder="وزن (۱ تا ۵)"
+                          placeholder="۱ تا ۵"
+                          className="w-24"
                           onChange={(e) =>
                             updateCriterion(criterion.id, {
                               weight: normalizeDecisionWeight(e.target.value),
                             })
                           }
                         />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeCriterion(criterion.id)}
-                          disabled={criteria.length === 1}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Trash2 className="size-4 text-muted-foreground" />
-                        </Button>
+                        <p className="text-[10px] text-muted-foreground">۱ = کم، ۵ = بسیار زیاد</p>
                       </div>
-                      <Textarea
-                        rows={2}
-                        placeholder="توضیح معیار (اختیاری)"
-                        value={criterion.notes || ""}
-                        onChange={(e) =>
-                          updateCriterion(criterion.id, { notes: e.target.value })
-                        }
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        وزن معیار یعنی اهمیت آن در تصمیم: ۱ کمترین، ۵ بیشترین.
-                      </p>
                     </div>
-                  ))}
-                </div>
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeCriterion(criterion.id)}
+                        disabled={criteria.length === 1}
+                        className="gap-1.5 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive"
+                      >
+                        <Trash2 className="size-3.5" />
+                        حذف
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
+            </div>
+          )}
 
-              <div className="h-px bg-border" />
-
+          {currentStep === 3 && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                گزینه‌های مختلف را تعریف کنید و برای هر کدام مزایا، معایب و سطح ریسک مشخص نمایید تا مقایسه آسان‌تر شود.
+              </p>
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-2">
+                  گزینه‌ها
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground">{options.length}</span>
+                </Label>
+                <Button type="button" variant="outline" size="sm" onClick={addOption} className="gap-2 border-dashed">
+                  <Plus className="size-3.5" />
+                  افزودن گزینه
+                </Button>
+              </div>
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="flex items-center gap-2">
-                    گزینه‌ها
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground">{options.length}</span>
-                  </Label>
-                  <Button type="button" variant="outline" size="sm" onClick={addOption} className="gap-2 border-dashed">
-                    <Plus className="size-3.5" />
-                    افزودن گزینه
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  {options.map((option) => (
-                    <div key={option.id} className="group space-y-2 rounded-xl border p-3 transition-all hover:shadow-sm">
+                {options.map((option, index) => (
+                  <div key={option.id} className="group space-y-3 rounded-xl border p-4 transition-all hover:shadow-sm">
+                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <span className="flex size-5 items-center justify-center rounded-md bg-muted text-[10px] font-bold">{String.fromCharCode(65 + index)}</span>
+                      گزینه {String.fromCharCode(65 + index)}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">عنوان گزینه</Label>
                       <div className="flex items-center gap-2">
                         <Input
-                          placeholder="عنوان گزینه"
+                          placeholder="مثلا: استفاده از React، استفاده از Vue"
                           value={option.title}
                           onChange={(e) => updateOption(option.id, { title: e.target.value })}
                         />
@@ -582,38 +613,55 @@ export default function NewDecisionPage() {
                           size="icon"
                           onClick={() => removeOption(option.id)}
                           disabled={options.length === 1}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive"
                         >
                           <Trash2 className="size-4 text-muted-foreground" />
                         </Button>
                       </div>
-                      <div className="grid gap-2 sm:grid-cols-2">
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-emerald-600">مزایا</Label>
                         <Textarea
                           rows={2}
-                          placeholder="مزایا"
+                          placeholder="نقاط قوت این گزینه چیست؟"
                           value={option.pros}
                           onChange={(e) => updateOption(option.id, { pros: e.target.value })}
                         />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-destructive">معایب</Label>
                         <Textarea
                           rows={2}
-                          placeholder="معایب"
+                          placeholder="نقاط ضعف یا محدودیت‌های این گزینه چیست؟"
                           value={option.cons}
                           onChange={(e) => updateOption(option.id, { cons: e.target.value })}
                         />
                       </div>
-                      <Input
-                        placeholder="ریسک (کم/متوسط/زیاد یا سفارشی)"
-                        value={option.risk || ""}
-                        onChange={(e) => updateOption(option.id, { risk: e.target.value })}
-                      />
                     </div>
-                  ))}
-                </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">سطح ریسک</Label>
+                      <Select
+                        value={option.risk || "متوسط"}
+                        onValueChange={(v) => updateOption(option.id, { risk: v })}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="سطح ریسک" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="کم">کم</SelectItem>
+                          <SelectItem value="متوسط">متوسط</SelectItem>
+                          <SelectItem value="زیاد">زیاد</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
-          {currentStep === 3 && (
+          {currentStep === 4 && (
             <div className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -624,7 +672,7 @@ export default function NewDecisionPage() {
                       updateForm({ urgency: v as NonNullable<Decision["urgency"]> })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

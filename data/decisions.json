@@ -60,7 +60,7 @@
     "title": "تغییر تکنولوژی",
     "problemStatement": "نیاز به بهبود زیرساخت داریم.",
     "status": "Draft",
-    "category": "معماری",
+    "category": "امنیت",
     "impact": "Medium",
     "ownerId": "1",
     "ownerName": "امیرحسین",
@@ -72,7 +72,8 @@
     "confidence": 80,
     "reversible": true,
     "createdAt": "2026-02-25T19:57:40.532Z",
-    "updatedAt": "2026-02-27T09:28:05.978Z"
+    "updatedAt": "2026-02-27T15:49:12.909Z",
+    "urgency": "Medium"
   },
   {
     "id": "fa291add-86d2-464b-902f-14c78da58be9",

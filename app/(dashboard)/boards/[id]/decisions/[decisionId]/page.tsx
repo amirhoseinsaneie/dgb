@@ -968,12 +968,19 @@ export default function DecisionDetailPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <AlertTriangle className="size-3 text-muted-foreground shrink-0" />
-                        <Input
-                          value={option.risk || ""}
-                          placeholder="ریسک مرتبط"
-                          onChange={(event) => updateOption(option.id, { risk: event.target.value })}
-                          className="h-8 text-xs"
-                        />
+                        <Select
+                          value={option.risk || "متوسط"}
+                          onValueChange={(v) => updateOption(option.id, { risk: v })}
+                        >
+                          <SelectTrigger className="h-8 w-full text-xs">
+                            <SelectValue placeholder="سطح ریسک" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="کم">کم</SelectItem>
+                            <SelectItem value="متوسط">متوسط</SelectItem>
+                            <SelectItem value="زیاد">زیاد</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   );
