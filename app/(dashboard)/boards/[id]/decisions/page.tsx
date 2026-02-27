@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Download, Filter, MoreHorizontal, Plus, Search, X } from "lucide-react";
+import { Download, Filter, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,7 @@ const statusColors: Record<string, string> = {
 export default function DecisionsListPage() {
   const params = useParams();
   const boardId = params.id as string;
-  const { getBoard, getBoardDecisions, config } = useApp();
+  const { getBoard, getBoardDecisions, deleteDecision, updateDecision, config } = useApp();
 
   const board = getBoard(boardId);
   const decisions = getBoardDecisions(boardId);
@@ -186,7 +186,25 @@ export default function DecisionsListPage() {
         ]}
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const csv = [
+                  ["عنوان", "وضعیت", "مالک", "تاثیر", "سررسید"].join(","),
+                  ...filteredDecisions.map((d) =>
+                    [d.title, d.status, d.ownerName || "-", d.impact, d.dueDate || "-"].join(",")
+                  ),
+                ].join("\n");
+                const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `decisions-${board.name}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+            >
               <Download className="me-2 size-4" />
               خروجی
             </Button>
@@ -329,16 +347,29 @@ export default function DecisionsListPage() {
             <span className="text-primary">{visibleSelectedCount}</span>
             <span>مورد انتخاب شده</span>
             <div className="ms-3 flex gap-1.5">
-              <Button variant="ghost" size="sm" className="h-7 px-2.5 text-xs">
-                تغییر وضعیت
-              </Button>
-              <Button variant="ghost" size="sm" className="h-7 px-2.5 text-xs">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2.5 text-xs"
+                onClick={() => {
+                  for (const id of selectedIds) {
+                    void updateDecision(id, { status: "Done" });
+                  }
+                  setSelectedIds([]);
+                }}
+              >
                 بایگانی
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-7 px-2.5 text-xs text-destructive"
+                onClick={() => {
+                  for (const id of selectedIds) {
+                    void deleteDecision(id);
+                  }
+                  setSelectedIds([]);
+                }}
               >
                 حذف
               </Button>
@@ -485,11 +516,14 @@ export default function DecisionsListPage() {
                           <Link
                             href={`/boards/${boardId}/decisions/${decision.id}`}
                           >
-                            مشاهده
+                            مشاهده / ویرایش
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>ویرایش</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => void deleteDecision(decision.id)}
+                        >
+                          <Trash2 className="size-4 me-2" />
                           حذف
                         </DropdownMenuItem>
                       </DropdownMenuContent>

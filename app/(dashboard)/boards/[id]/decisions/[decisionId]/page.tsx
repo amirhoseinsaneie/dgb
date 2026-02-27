@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import {
   AlertTriangle,
-  Archive,
   Calendar,
   CheckCircle2,
   Clock,
@@ -74,7 +74,8 @@ export default function DecisionDetailPage() {
   const params = useParams();
   const boardId = params.id as string;
   const decisionId = params.decisionId as string;
-  const { getBoard, getDecision, updateDecision, users, config } = useApp();
+  const router = useRouter();
+  const { getBoard, getDecision, updateDecision, addDecision, deleteDecision, users, config } = useApp();
 
   const board = getBoard(boardId);
   const decision = getDecision(decisionId);
@@ -441,21 +442,61 @@ export default function DecisionDetailPage() {
           </div>
         </div>
 
-        {/* Action buttons */}
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2 rounded-full">
-            <Send className="size-3.5" />
-            درخواست تایید
+          <Button variant="outline" size="sm" className="gap-2 rounded-full" asChild>
+            <Link href={`/boards/${boardId}/decisions/${decisionId}/approvals`}>
+              <Send className="size-3.5" />
+              درخواست تایید
+            </Link>
           </Button>
-          <Button variant="outline" size="sm" className="gap-2 rounded-full">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 rounded-full"
+            onClick={() => {
+              const clone: Decision = {
+                ...decision,
+                id: crypto.randomUUID(),
+                title: `${decision.title} (کپی)`,
+                status: "Draft",
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              };
+              void addDecision(clone).then(() =>
+                router.push(`/boards/${boardId}/decisions/${clone.id}`)
+              );
+            }}
+          >
             <Copy className="size-3.5" />
             تکثیر
           </Button>
-          <Button variant="outline" size="sm" className="gap-2 rounded-full">
-            <Archive className="size-3.5" />
-            بایگانی
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 rounded-full"
+            onClick={() => {
+              void deleteDecision(decisionId).then(() =>
+                router.push(`/boards/${boardId}/decisions`)
+              );
+            }}
+          >
+            <Trash2 className="size-3.5" />
+            حذف
           </Button>
-          <Button variant="outline" size="sm" className="gap-2 rounded-full">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 rounded-full"
+            onClick={() => {
+              const blob = new Blob([JSON.stringify(decision, null, 2)], { type: "application/json" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `decision-${decision.title}.json`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+          >
             <Download className="size-3.5" />
             خروجی
           </Button>

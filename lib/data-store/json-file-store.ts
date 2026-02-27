@@ -105,6 +105,16 @@ class JsonFileDataStore implements DataStore {
     });
   }
 
+  async deleteBoard(id: string): Promise<boolean> {
+    return withWriteLock(async () => {
+      const boards = await readCollection("boards");
+      const filtered = boards.filter((board) => board.id !== id);
+      if (filtered.length === boards.length) return false;
+      await writeCollection("boards", filtered);
+      return true;
+    });
+  }
+
   async addDecision(decision: Decision): Promise<Decision> {
     return withWriteLock(async () => {
       const decisions = await readCollection("decisions");
@@ -135,6 +145,16 @@ class JsonFileDataStore implements DataStore {
       decisions[decisionIndex] = updatedDecision;
       await writeCollection("decisions", decisions);
       return updatedDecision;
+    });
+  }
+
+  async deleteDecision(id: string): Promise<boolean> {
+    return withWriteLock(async () => {
+      const decisions = await readCollection("decisions");
+      const filtered = decisions.filter((decision) => decision.id !== id);
+      if (filtered.length === decisions.length) return false;
+      await writeCollection("decisions", filtered);
+      return true;
     });
   }
 

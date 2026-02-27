@@ -27,3 +27,25 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const deleted = await dataStore.deleteBoard(id);
+
+    if (!deleted) {
+      return NextResponse.json({ error: "Board not found." }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Failed to delete board:", error);
+    return NextResponse.json(
+      { error: "Failed to delete board." },
+      { status: 500 }
+    );
+  }
+}

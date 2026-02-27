@@ -370,7 +370,20 @@ export default function ApprovalPage() {
                 className="transition-shadow focus:shadow-sm"
               />
             </div>
-            <Button variant="outline" className="gap-2 shadow-sm">
+            <Button
+              variant="outline"
+              className="gap-2 shadow-sm"
+              onClick={() => {
+                const pendingIds = rows
+                  .filter((r) => r.status === "Pending")
+                  .map((r) => r.approverId);
+                for (const id of pendingIds) {
+                  sendReminder(id);
+                }
+                setInternalNote("");
+              }}
+              disabled={rows.filter((r) => r.status === "Pending").length === 0}
+            >
               <Send className="size-4" />
               ارسال درخواست تایید همگانی
             </Button>

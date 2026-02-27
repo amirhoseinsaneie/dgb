@@ -5,11 +5,10 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   AlertCircle,
-  Filter,
-  GripVertical,
   MoreHorizontal,
   Plus,
   Search,
+  Trash2,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -55,7 +54,7 @@ const columnDotColors: Record<string, string> = {
 export default function KanbanPage() {
   const params = useParams();
   const boardId = params.id as string;
-  const { getBoard, getBoardDecisions, updateDecision, config } = useApp();
+  const { getBoard, getBoardDecisions, updateDecision, deleteDecision, config } = useApp();
 
   const board = getBoard(boardId);
   const decisions = getBoardDecisions(boardId);
@@ -114,10 +113,6 @@ export default function KanbanPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Button variant="outline" size="sm">
-              <Filter className="me-2 size-4" />
-              فیلتر
-            </Button>
             <Button asChild size="sm" className="shadow-sm">
               <Link href={`/boards/${boardId}/decisions/new`}>
                 <Plus className="me-2 size-4" />
@@ -208,11 +203,14 @@ export default function KanbanPage() {
                                 <Link
                                   href={`/boards/${boardId}/decisions/${decision.id}`}
                                 >
-                                  مشاهده
+                                  مشاهده / ویرایش
                                 </Link>
                               </DropdownMenuItem>
-                              <DropdownMenuItem>ویرایش</DropdownMenuItem>
-                              <DropdownMenuItem variant="destructive">
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => void deleteDecision(decision.id)}
+                              >
+                                <Trash2 className="size-4 me-2" />
                                 حذف
                               </DropdownMenuItem>
                             </DropdownMenuContent>

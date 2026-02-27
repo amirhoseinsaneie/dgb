@@ -26,8 +26,10 @@ interface AppContextValue extends AppState {
   getDecision: (id: string) => Decision | undefined;
   addBoard: (board: Board) => Promise<void>;
   updateBoard: (id: string, updates: Partial<Board>) => Promise<void>;
+  deleteBoard: (id: string) => Promise<void>;
   addDecision: (decision: Decision) => Promise<void>;
   updateDecision: (id: string, updates: Partial<Decision>) => Promise<void>;
+  deleteDecision: (id: string) => Promise<void>;
   addTemplate: (template: Template) => Promise<void>;
   updateTemplate: (id: string, updates: Partial<Template>) => Promise<void>;
 }
@@ -147,6 +149,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [refreshSafely]
   );
 
+  const deleteBoard = useCallback(
+    async (id: string) => {
+      setState((s) => ({
+        ...s,
+        boards: s.boards.filter((b) => b.id !== id),
+        decisions: s.decisions.filter((d) => d.boardId !== id),
+      }));
+      try {
+        await apiRequest(`/api/db/boards/${id}`, { method: "DELETE" });
+      } catch (error) {
+        console.error("Failed to delete board:", error);
+        void refreshSafely();
+      }
+    },
+    [refreshSafely]
+  );
+
   const addDecision = useCallback(
     async (decision: Decision) => {
       setState((s) => ({ ...s, decisions: [...s.decisions, decision] }));
@@ -180,6 +199,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
         });
       } catch (error) {
         console.error("Failed to persist decision update:", error);
+        void refreshSafely();
+      }
+    },
+    [refreshSafely]
+  );
+
+  const deleteDecision = useCallback(
+    async (id: string) => {
+      setState((s) => ({
+        ...s,
+        decisions: s.decisions.filter((d) => d.id !== id),
+      }));
+      try {
+        await apiRequest(`/api/db/decisions/${id}`, { method: "DELETE" });
+      } catch (error) {
+        console.error("Failed to delete decision:", error);
         void refreshSafely();
       }
     },
@@ -233,8 +268,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       getDecision,
       addBoard,
       updateBoard,
+      deleteBoard,
       addDecision,
       updateDecision,
+      deleteDecision,
       addTemplate,
       updateTemplate,
     }),
@@ -247,8 +284,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       getDecision,
       addBoard,
       updateBoard,
+      deleteBoard,
       addDecision,
       updateDecision,
+      deleteDecision,
       addTemplate,
       updateTemplate,
     ]

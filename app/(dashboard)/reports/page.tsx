@@ -153,15 +153,28 @@ export default function ReportsPage() {
         subtitle="سلامت تصمیمات و روندها"
         breadcrumbs={[{ label: "گزارش‌ها", href: "/reports" }]}
         actions={
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <FileDown className="size-4 me-2" />
-              خروجی PDF
-            </Button>
-            <Button variant="outline" size="sm">
-              خروجی CSV
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const csv = [
+                ["عنوان", "وضعیت", "مالک", "تاثیر", "دسته‌بندی", "اطمینان"].join(","),
+                ...decisions.map((d) =>
+                  [d.title, d.status, d.ownerName || "-", d.impact, d.category || "-", `${d.confidence}%`].join(",")
+                ),
+              ].join("\n");
+              const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "report.csv";
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            <FileDown className="size-4 me-2" />
+            خروجی CSV
+          </Button>
         }
       />
 

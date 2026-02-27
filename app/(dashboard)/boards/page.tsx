@@ -9,6 +9,7 @@ import {
   FolderOpen,
   MoreHorizontal,
   Plus,
+  Trash2,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { faIR } from "date-fns/locale";
@@ -49,7 +50,7 @@ import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export default function BoardsListPage() {
-  const { boards, getBoardDecisions } = useApp();
+  const { boards, getBoardDecisions, addBoard, updateBoard, deleteBoard } = useApp();
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"updated" | "name">("updated");
   const [statusFilter, setStatusFilter] = useState<
@@ -224,16 +225,38 @@ export default function BoardsListPage() {
                               باز کردن
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2">
+                          <DropdownMenuItem
+                            className="gap-2"
+                            onClick={() => {
+                              const clone = {
+                                ...board,
+                                id: crypto.randomUUID(),
+                                name: `${board.name} (کپی)`,
+                                createdAt: new Date().toISOString(),
+                                updatedAt: new Date().toISOString(),
+                              };
+                              void addBoard(clone);
+                            }}
+                          >
                             <Copy className="size-4" />
                             تکثیر
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            variant="destructive"
                             className="gap-2"
+                            onClick={() =>
+                              void updateBoard(board.id, { status: board.status === "Archived" ? "Active" : "Archived" })
+                            }
                           >
                             <Archive className="size-4" />
-                            بایگانی
+                            {board.status === "Archived" ? "فعال‌سازی" : "بایگانی"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            className="gap-2"
+                            onClick={() => void deleteBoard(board.id)}
+                          >
+                            <Trash2 className="size-4" />
+                            حذف
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
